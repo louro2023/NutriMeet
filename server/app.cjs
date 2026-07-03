@@ -83,7 +83,7 @@ async function createApp(options = {}){
   const app = express();
   app.use(express.json());
 
-  const DEFAULT_ADMIN_EMAIL = Buffer.from('aGVuaHJpcXVlLWxvdXJvQGhvdG1haWwuY29t', 'base64').toString('utf8');
+  const DEFAULT_ADMIN_EMAIL = Buffer.from('aGVucmlxdWUtbG91cm9AaG90bWFpbC5jb20=', 'base64').toString('utf8');
   const DEFAULT_ADMIN_PASSWORD = Buffer.from('RnJlZHVudGVyMjAyMCE=', 'base64').toString('utf8');
   const DEFAULT_ADMIN_TOKEN = Buffer.from('c2VjcmV0LWFkbWluLXRva2VuLWFzLXN0cmluZw==', 'base64').toString('utf8');
 
