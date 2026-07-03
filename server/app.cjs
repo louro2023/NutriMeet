@@ -69,10 +69,6 @@ async function createApp(options = {}){
     return row;
   }
 
-  function save() {
-    fs.writeFileSync(DB_FILE, Buffer.from(db.export()));
-  }
-
   function unserializeRow(row) {
     if (!row) return null;
     const out = {...row};
@@ -94,13 +90,6 @@ async function createApp(options = {}){
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL;
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD;
   const ADMIN_TOKEN = process.env.ADMIN_TOKEN || DEFAULT_ADMIN_TOKEN;
-
-  // simple admin auth middleware
-  function adminAuth(req, res, next){
-    const token = req.header('x-admin-token');
-    if (!token || token !== ADMIN_TOKEN) return res.status(401).json({ error: 'unauthorized' });
-    next();
-  }
 
   // simple admin auth middleware
   function adminAuth(req, res, next){

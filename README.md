@@ -40,7 +40,40 @@ npm run init-db
 npm run start:server
 ```
 
-4. Start the frontend (Vite)
+5. Start the frontend (Vite)
+
+```bash
+npm run dev
+```
+
+---
+
+## Deployment
+
+### Vercel
+
+- A aplicação funciona em Vercel com `vercel.json` e a função API em `api/[...slug].cjs`.
+- `/api/*` é roteado para a função serverless, enquanto o frontend é servido como build estático.
+- O login administrativo usa credenciais padrão embutidas quando não há variáveis de ambiente definidas.
+- Importante: o SQLite local não é persistente em Vercel para escrita. A Vercel pode manter apenas leitura no deploy e qualquer gravação só funciona em tmpfs durante a execução.
+
+### HostGator (futuro)
+
+- No HostGator, recomendamos migrar para um banco de dados gerenciado ou um serviço externo antes de usar o app em produção.
+- Caso o HostGator ofereça suporte a Node.js e escrita em disco, o SQLite pode ser usado com persistência na hospedagem.
+- Se o HostGator não suportar Node.js diretamente, a melhor opção é adaptar o backend para um serviço compatível ou usar um banco externo como PostgreSQL, MySQL, Supabase, Neon ou PlanetScale.
+
+### Admin credentials
+
+- Existem credenciais internas padrão codificadas para acesso administrativo.
+- Se quiser, pode configurar as variáveis de ambiente:
+  - `ADMIN_EMAIL`
+  - `ADMIN_PASSWORD`
+  - `ADMIN_TOKEN`
+
+---
+
+## Admin API endpoints
 
 ```bash
 npm run dev
