@@ -13,7 +13,7 @@ const DB_FILE = path.join(DATA_DIR, 'db.sqlite');
 const TMP_DB_FILE = path.join(os.tmpdir(), 'nutrimeet-db.sqlite');
 
 const DEFAULT_ADMIN_EMAIL = Buffer.from('aGVuaHJpcXVlLWxvdXJvQGhvdG1haWwuY29t', 'base64').toString('utf8');
-const DEFAULT_ADMIN_PASSWORD = Buffer.from('RnJlZHVudGVyMjAyMSE=', 'base64').toString('utf8');
+const DEFAULT_ADMIN_PASSWORD = Buffer.from('RnJlZHVudGVyMjAyMCE=', 'base64').toString('utf8');
 const DEFAULT_ADMIN_TOKEN = Buffer.from('c2VjcmV0LWFkbWluLXRva2VuLWFzLXN0cmluZw==', 'base64').toString('utf8');
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL;
