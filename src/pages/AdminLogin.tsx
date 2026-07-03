@@ -4,20 +4,23 @@ import { Leaf, Lock } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
+import { loginAdmin } from '../lib/api';
 
 export function AdminLogin() {
-  const [email, setEmail] = useState('admin@nutrimeet.com');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'admin@nutrimeet.com' && password === '123456') {
-      try { localStorage.setItem('adminToken', 'admin-secret'); } catch(e) {}
+    setError('');
+    try {
+      const data = await loginAdmin(email, password);
+      try { localStorage.setItem('adminToken', data.token); } catch(e) {}
       navigate('/admin');
-    } else {
-      setError('Credenciais inválidas. Use admin@nutrimeet.com / 123456');
+    } catch (e) {
+      setError('Credenciais inválidas. Verifique seu e-mail e senha.');
     }
   };
 
@@ -43,6 +46,7 @@ export function AdminLogin() {
               <Input 
                 type="email" 
                 value={email}
+                placeholder="seu@email.com"
                 onChange={e => setEmail(e.target.value)}
                 required 
               />

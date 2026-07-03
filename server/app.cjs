@@ -5,7 +5,6 @@ const initSqlJs = require('sql.js');
 
 async function createApp(options = {}){
   const DB_FILE = options.dbFile || path.resolve(__dirname, '../data/db.sqlite');
-  const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'admin-secret';
 
   const SQL = await initSqlJs();
 
@@ -62,12 +61,27 @@ async function createApp(options = {}){
   const app = express();
   app.use(express.json());
 
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || '';
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
+  const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
+
   // simple admin auth middleware
   function adminAuth(req, res, next){
     const token = req.header('x-admin-token');
     if (!token || token !== ADMIN_TOKEN) return res.status(401).json({ error: 'unauthorized' });
     next();
   }
+
+  app.post('/api/admin/login', (req, res) => {
+    try {
+      const { email, password } = req.body || {};
+      if (!email || !password) return res.status(400).json({ error: 'missing credentials' });
+      if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) return res.status(401).json({ error: 'invalid credentials' });
+      res.json({ token: ADMIN_TOKEN });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
 
   // Public endpoints
   app.get('/api/nutritionists', (req, res) => {

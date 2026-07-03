@@ -17,7 +17,8 @@ describe('API basic', () => {
   });
 
   test('Admin create and delete nutritionist', async () => {
-    const token = process.env.ADMIN_TOKEN || 'admin-secret';
+    const token = process.env.ADMIN_TOKEN;
+    if (!token) throw new Error('ADMIN_TOKEN environment variable is required for admin tests');
     const nutri = { name: 'Test Nutri', crn: '0000/XX', specialties: ['Teste'], approaches: ['Teste'] };
     const createRes = await request(app).post('/api/nutritionists').set('x-admin-token', token).send(nutri);
     expect(createRes.status).toBe(201);
@@ -30,7 +31,8 @@ describe('API basic', () => {
   });
 
   test('Admin update subscription status', async () => {
-    const token = process.env.ADMIN_TOKEN || 'admin-secret';
+    const token = process.env.ADMIN_TOKEN;
+    if (!token) throw new Error('ADMIN_TOKEN environment variable is required for admin tests');
     // get first subscription
     const subs = await request(app).get('/api/subscriptions');
     expect(subs.status).toBe(200);

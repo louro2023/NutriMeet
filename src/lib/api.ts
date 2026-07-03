@@ -26,6 +26,7 @@ export const getStates = () => fetchJson('/api/states');
 export const getTestimonials = () => fetchJson('/api/testimonials');
 export const getFaqs = () => fetchJson('/api/faqs');
 export const getSubscriptions = () => fetchJson('/api/subscriptions');
+export const loginAdmin = (email: string, password: string) => fetchJson('/api/admin/login', { method: 'POST', body: JSON.stringify({ email, password }), headers: { 'Content-Type': 'application/json' } });
 
 export const updateSubscriptionStatus = (id: string, status: string) => fetchJson(`/api/subscriptions/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }), headers: { 'Content-Type': 'application/json' } });
 export const updateNutritionist = (id: string, body: any) => fetchJson(`/api/nutritionists/${id}`, { method: 'PUT', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
