@@ -1,16 +1,34 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const initSqlJs = require('sql.js');
 
 async function createApp(options = {}){
   const DB_FILE = options.dbFile || path.resolve(__dirname, '../data/db.sqlite');
+  const TMP_DB_FILE = path.join(os.tmpdir(), 'nutrimeet-db.sqlite');
 
   const SQL = await initSqlJs();
 
+  function ensureWritable(filePath) {
+    try {
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      fs.accessSync(path.dirname(filePath), fs.constants.W_OK);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  const DB_IS_WRITABLE = ensureWritable(DB_FILE);
+  let dbFileToRead = DB_FILE;
+  if (!fs.existsSync(DB_FILE) && !DB_IS_WRITABLE && fs.existsSync(TMP_DB_FILE)) {
+    dbFileToRead = TMP_DB_FILE;
+  }
+
   let db;
-  if (fs.existsSync(DB_FILE)) {
-    const buf = fs.readFileSync(DB_FILE);
+  if (fs.existsSync(dbFileToRead)) {
+    const buf = fs.readFileSync(dbFileToRead);
     db = new SQL.Database(new Uint8Array(buf));
   } else {
     db = new SQL.Database();
@@ -21,8 +39,16 @@ async function createApp(options = {}){
       CREATE TABLE IF NOT EXISTS subscriptions (id TEXT PRIMARY KEY, name TEXT, email TEXT, phone TEXT, crn TEXT, specialties TEXT, approaches TEXT, status TEXT, date TEXT, photo TEXT);
       CREATE TABLE IF NOT EXISTS lists (key TEXT PRIMARY KEY, value TEXT);
     `);
-    fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
-    fs.writeFileSync(DB_FILE, Buffer.from(db.export()));
+    if (DB_IS_WRITABLE) {
+      fs.writeFileSync(DB_FILE, Buffer.from(db.export()));
+    } else {
+      fs.writeFileSync(TMP_DB_FILE, Buffer.from(db.export()));
+    }
+  }
+
+  function save() {
+    const target = DB_IS_WRITABLE ? DB_FILE : TMP_DB_FILE;
+    fs.writeFileSync(target, Buffer.from(db.export()));
   }
 
   function all(sql, params=[]) {
@@ -68,6 +94,13 @@ async function createApp(options = {}){
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL;
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD;
   const ADMIN_TOKEN = process.env.ADMIN_TOKEN || DEFAULT_ADMIN_TOKEN;
+
+  // simple admin auth middleware
+  function adminAuth(req, res, next){
+    const token = req.header('x-admin-token');
+    if (!token || token !== ADMIN_TOKEN) return res.status(401).json({ error: 'unauthorized' });
+    next();
+  }
 
   // simple admin auth middleware
   function adminAuth(req, res, next){
