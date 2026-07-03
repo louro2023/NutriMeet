@@ -14,13 +14,27 @@ This repository contains a React + TypeScript frontend and a small Express API b
 npm install
 ```
 
-2. Initialize the database (creates `data/db.sqlite` with seeded sample data)
+2. Create a local `.env` file with admin credentials
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Then edit `.env` and set `ADMIN_EMAIL`, `ADMIN_PASSWORD` and `ADMIN_TOKEN`.
+
+3. Initialize the database (creates `data/db.sqlite` with seeded sample data)
 
 ```bash
 npm run init-db
 ```
 
-3. Start the API server
+4. Start the API server
 
 ```bash
 npm run start:server
