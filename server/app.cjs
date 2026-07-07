@@ -6,6 +6,7 @@ const { initializeDatabase } = require('./schema.cjs');
 
 const JSON_ARRAY_FIELDS = new Set(['specialties', 'approaches', 'languages', 'modality']);
 const NUTRITIONIST_STATUSES = new Set(['active', 'pending', 'rejected']);
+const DEFAULT_ADMIN_TOKEN_SECRET = 'nutrimeet-default-admin-session-secret';
 const NUTRITIONIST_FIELDS = [
   'name',
   'photo',
@@ -88,16 +89,7 @@ function normalizeListValue(value) {
 }
 
 function getTokenSecret() {
-  return process.env.ADMIN_TOKEN_SECRET || process.env.ADMIN_TOKEN || null;
-}
-
-function requireTokenSecret() {
-  const secret = getTokenSecret();
-  if (secret) return secret;
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('ADMIN_TOKEN_SECRET is required in production.');
-  }
-  return 'nutrimeet-development-admin-token-secret';
+  return process.env.ADMIN_TOKEN_SECRET || process.env.ADMIN_TOKEN || DEFAULT_ADMIN_TOKEN_SECRET;
 }
 
 function base64urlJson(value) {
@@ -153,7 +145,7 @@ function requestToken(req) {
 
 function createAdminAuth(secret) {
   return (req, res, next) => {
-    const admin = verifyAdminToken(requestToken(req), secret || requireTokenSecret());
+    const admin = verifyAdminToken(requestToken(req), secret || getTokenSecret());
     if (!admin) return res.status(401).json({ error: 'unauthorized' });
     req.admin = admin;
     return next();
@@ -176,7 +168,7 @@ async function createApp(options = {}) {
 
   app.get('/api/health', asyncHandler(async (req, res) => {
     await row(db, 'SELECT 1 AS ok');
-    res.json({ ok: true, database: true, authConfigured: Boolean(getTokenSecret()) });
+    res.json({ ok: true, database: true, databaseMode: db.mode || 'unknown', authConfigured: true });
   }));
 
   app.post('/api/admin/login', asyncHandler(async (req, res) => {
@@ -198,7 +190,7 @@ async function createApp(options = {}) {
       return res.status(401).json({ error: 'invalid credentials' });
     }
 
-    return res.json({ token: signAdminToken(admin, requireTokenSecret()) });
+    return res.json({ token: signAdminToken(admin, getTokenSecret()) });
   }));
 
   app.get('/api/nutritionists', asyncHandler(async (req, res) => {

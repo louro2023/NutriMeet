@@ -23,7 +23,7 @@ export function AdminLogin() {
       if (e instanceof ApiError && e.status === 401) {
         setError('Credenciais inválidas. Verifique seu e-mail e senha.');
       } else {
-        setError('Erro no servidor. Verifique as variáveis DATABASE_URL e ADMIN_TOKEN_SECRET na Vercel.');
+        setError('Erro no servidor. Verifique /api/health e os logs da Vercel.');
       }
     }
   };

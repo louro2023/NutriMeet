@@ -15,7 +15,12 @@ async function main() {
     });
 
     const adminEmail = (process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
-    console.log(`Neon/PostgreSQL database initialized${reset ? ' with reset' : ''}.`);
+    if (db.mode === 'memory') {
+      console.log('No DATABASE_URL found. Initialized the in-memory fallback database only.');
+      console.log('Configure DATABASE_URL to initialize Neon/PostgreSQL persistence.');
+    } else {
+      console.log(`Neon/PostgreSQL database initialized${reset ? ' with reset' : ''}.`);
+    }
     console.log(`Admin user ready: ${adminEmail}`);
   } finally {
     await db.close();

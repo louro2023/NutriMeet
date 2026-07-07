@@ -1,6 +1,8 @@
 const { Pool } = require('pg');
 
 let cachedPool;
+let cachedMode;
+let warnedAboutMemoryFallback = false;
 
 function getDatabaseUrl() {
   return process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL;
@@ -19,7 +21,20 @@ function shouldUseSsl(connectionString) {
 function createPool() {
   const connectionString = getDatabaseUrl();
   if (!connectionString) {
-    throw new Error('DATABASE_URL is required. Use the Neon PostgreSQL connection string.');
+    if (!cachedPool) {
+      const { newDb } = require('pg-mem');
+      const memoryDb = newDb({ autoCreateForeignKeyIndices: true });
+      const { Pool: MemoryPool } = memoryDb.adapters.createPg();
+      cachedPool = new MemoryPool();
+      cachedMode = 'memory';
+    }
+
+    if (!warnedAboutMemoryFallback) {
+      console.warn('DATABASE_URL was not found. Using an in-memory database fallback.');
+      warnedAboutMemoryFallback = true;
+    }
+
+    return cachedPool;
   }
 
   if (!cachedPool) {
@@ -35,6 +50,7 @@ function createPool() {
     }
 
     cachedPool = new Pool(config);
+    cachedMode = 'postgres';
     cachedPool.on('error', (error) => {
       console.error('Unexpected PostgreSQL pool error', error);
     });
@@ -45,9 +61,17 @@ function createPool() {
 
 function createDatabase(options = {}) {
   const pool = options.pool || createPool();
+  const isCachedPool = pool === cachedPool;
   return {
     query: (text, params) => pool.query(text, params),
-    close: () => pool.end(),
+    close: async () => {
+      await pool.end();
+      if (isCachedPool) {
+        cachedPool = null;
+        cachedMode = null;
+      }
+    },
+    mode: options.mode || cachedMode || 'custom',
   };
 }
 
