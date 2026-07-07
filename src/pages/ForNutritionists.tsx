@@ -5,14 +5,90 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
+import { createSubscription } from '../lib/api';
 import foodHero from '../assets/food-hero.jpg';
+
+type FormState = {
+  name: string;
+  crn: string;
+  email: string;
+  phone: string;
+  description: string;
+  photo: string;
+};
+
+const initialForm: FormState = {
+  name: '',
+  crn: '',
+  email: '',
+  phone: '',
+  description: '',
+  photo: '',
+};
 
 export function ForNutritionists() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState<FormState>(initialForm);
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const updateForm = (field: keyof FormState, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    setError('');
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Envie uma imagem em JPG, PNG ou WebP.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('A foto deve ter no máximo 5MB.');
+      return;
+    }
+
+    try {
+      const photo = await compressProfilePhoto(file);
+      updateForm('photo', photo);
+    } catch (error) {
+      console.error(error);
+      setError('Não foi possível processar a foto. Tente outra imagem.');
+    }
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setSubmitted(true);
+    setError('');
+
+    if (!form.photo) {
+      setError('Envie uma foto de perfil para concluir a inscrição.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await createSubscription({
+        name: form.name,
+        crn: form.crn,
+        email: form.email,
+        phone: form.phone,
+        description: form.description,
+        photo: form.photo,
+        specialties: [],
+        approaches: [],
+      });
+      setSubmitted(true);
+      setForm(initialForm);
+    } catch (error) {
+      console.error(error);
+      setError('Não foi possível enviar sua inscrição. Tente novamente em instantes.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -25,9 +101,9 @@ export function ForNutritionists() {
             </div>
             <h2 className="font-serif text-3xl font-bold text-emerald-950">Inscrição enviada!</h2>
             <p className="mb-8 mt-3 leading-7 text-slate-600">
-              Recebemos seus dados. Nossa equipe fará a validação do CRN e do perfil em até 48 horas.
+              Recebemos seus dados e sua foto de perfil. Após a aprovação, ela será usada no perfil público.
             </p>
-            <Button onClick={() => setSubmitted(false)} className="w-full">Voltar</Button>
+            <Button onClick={() => setSubmitted(false)} className="w-full">Enviar outra inscrição</Button>
           </Card>
         </motion.div>
       </div>
@@ -78,27 +154,43 @@ export function ForNutritionists() {
           <div className="bg-emerald-950 p-8 text-center text-white">
             <p className="text-sm font-bold uppercase text-lime-200">Cadastro profissional</p>
             <h2 className="mt-2 font-serif text-3xl font-bold">Conte para nós sobre seu atendimento</h2>
-            <p className="mt-2 text-emerald-50/70">Essas informações ajudam nossa equipe a avaliar e montar um perfil mais completo.</p>
+            <p className="mt-2 text-emerald-50/70">Sua foto será revisada e exibida no perfil público após aprovação.</p>
           </div>
           <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="rounded-lg border border-red-100 bg-red-50 p-3 text-sm font-medium text-red-700">
+                  {error}
+                </div>
+              )}
+
               <div className="grid gap-6 md:grid-cols-2">
-                <Field label="Nome completo"><Input required placeholder="Ex: Dra. Ana Silva" /></Field>
-                <Field label="CRN"><Input required placeholder="Ex: 12345/SP" /></Field>
-                <Field label="E-mail"><Input type="email" required placeholder="seu@email.com" /></Field>
-                <Field label="WhatsApp"><Input required placeholder="(11) 99999-9999" /></Field>
+                <Field label="Nome completo"><Input required value={form.name} onChange={(event) => updateForm('name', event.target.value)} placeholder="Ex: Dra. Ana Silva" /></Field>
+                <Field label="CRN"><Input required value={form.crn} onChange={(event) => updateForm('crn', event.target.value)} placeholder="Ex: 12345/SP" /></Field>
+                <Field label="E-mail"><Input type="email" required value={form.email} onChange={(event) => updateForm('email', event.target.value)} placeholder="seu@email.com" /></Field>
+                <Field label="WhatsApp"><Input required value={form.phone} onChange={(event) => updateForm('phone', event.target.value)} placeholder="(11) 99999-9999" /></Field>
               </div>
 
               <Field label="Sobre mim">
-                <Textarea required placeholder="Conte sobre sua trajetória, formação e abordagem de atendimento..." className="h-32" />
+                <Textarea required value={form.description} onChange={(event) => updateForm('description', event.target.value)} placeholder="Conte sobre sua trajetória, formação e abordagem de atendimento..." className="h-32" />
               </Field>
 
               <Field label="Foto de perfil">
-                <div className="cursor-pointer rounded-lg border-2 border-dashed border-emerald-200 bg-emerald-50/60 p-8 text-center transition-colors hover:bg-emerald-50">
-                  <UploadCloud className="mx-auto mb-2 h-8 w-8 text-emerald-500" />
-                  <p className="text-sm font-semibold text-emerald-950">Clique ou arraste para fazer upload</p>
-                  <p className="mt-1 text-xs text-slate-500">JPG ou PNG até 5MB</p>
-                </div>
+                <label className="flex cursor-pointer flex-col items-center rounded-lg border-2 border-dashed border-emerald-200 bg-emerald-50/60 p-8 text-center transition-colors hover:bg-emerald-50">
+                  {form.photo ? (
+                    <>
+                      <img src={form.photo} alt="Prévia da foto de perfil" className="mb-4 h-28 w-28 rounded-full border-4 border-white object-cover shadow-md" />
+                      <p className="text-sm font-semibold text-emerald-950">Foto selecionada. Clique para trocar.</p>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="mx-auto mb-2 h-8 w-8 text-emerald-500" />
+                      <p className="text-sm font-semibold text-emerald-950">Clique para enviar a foto de perfil</p>
+                    </>
+                  )}
+                  <p className="mt-1 text-xs text-slate-500">JPG, PNG ou WebP até 5MB. Ela será exibida no avatar circular.</p>
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={handlePhotoChange} />
+                </label>
               </Field>
 
               <div className="space-y-4 border-t border-emerald-100 pt-4">
@@ -112,8 +204,8 @@ export function ForNutritionists() {
                 </label>
               </div>
 
-              <Button type="submit" size="lg" className="h-14 w-full text-base">
-                Enviar inscrição
+              <Button type="submit" size="lg" className="h-14 w-full text-base" disabled={submitting}>
+                {submitting ? 'Enviando inscrição...' : 'Enviar inscrição'}
               </Button>
             </form>
           </CardContent>
@@ -130,4 +222,37 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       {children}
     </div>
   );
+}
+
+function compressProfilePhoto(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Unable to read image.'));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error('Unable to load image.'));
+      image.onload = () => {
+        const maxSize = 900;
+        const ratio = Math.min(maxSize / image.width, maxSize / image.height, 1);
+        const width = Math.round(image.width * ratio);
+        const height = Math.round(image.height * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+
+        if (!context) {
+          reject(new Error('Canvas is not supported.'));
+          return;
+        }
+
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, width, height);
+        context.drawImage(image, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      image.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
 }

@@ -74,4 +74,34 @@ describe('API basic', () => {
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('approved');
   });
+
+  test('Public subscription stores photo and approval creates public profile', async () => {
+    const photo = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2w==';
+    const createRes = await request(app)
+      .post('/api/subscriptions')
+      .send({
+        name: 'Dra. Foto Teste',
+        email: 'foto@test.local',
+        phone: '11977777777',
+        crn: '98765/SP',
+        description: 'Atendimento humanizado e baseado em rotina real.',
+        photo,
+      });
+
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.photo).toBe(photo);
+
+    const approveRes = await request(app)
+      .put(`/api/subscriptions/${createRes.body.id}/status`)
+      .set('x-admin-token', token)
+      .send({ status: 'approved' });
+
+    expect(approveRes.status).toBe(200);
+
+    const profileRes = await request(app).get(`/api/nutritionists/nutri-${createRes.body.id}`);
+    expect(profileRes.status).toBe(200);
+    expect(profileRes.body.name).toBe('Dra. Foto Teste');
+    expect(profileRes.body.photo).toBe(photo);
+    expect(profileRes.body.status).toBe('active');
+  });
 });

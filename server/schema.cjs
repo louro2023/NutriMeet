@@ -115,6 +115,7 @@ const CREATE_SCHEMA_SQL = `
     email TEXT NOT NULL DEFAULT '',
     phone TEXT NOT NULL DEFAULT '',
     crn TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT '',
     specialties JSONB NOT NULL DEFAULT '[]'::jsonb,
     approaches JSONB NOT NULL DEFAULT '[]'::jsonb,
     status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
@@ -132,6 +133,10 @@ const CREATE_SCHEMA_SQL = `
 
   CREATE INDEX IF NOT EXISTS nutritionists_status_idx ON nutritionists (status);
   CREATE INDEX IF NOT EXISTS subscriptions_status_idx ON subscriptions (status);
+`;
+
+const MIGRATION_SQL = `
+  ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
 `;
 
 function adminIdFor(email) {
@@ -157,6 +162,7 @@ async function createSchema(db, options = {}) {
     await db.query(DROP_SCHEMA_SQL);
   }
   await db.query(CREATE_SCHEMA_SQL);
+  await db.query(MIGRATION_SQL);
 }
 
 async function seedLists(db) {

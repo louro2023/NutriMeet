@@ -83,7 +83,7 @@ export function AdminSubscriptions() {
               <TableRow key={sub.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-3">
-                    <img src={sub.photo} alt={sub.name} className="w-8 h-8 rounded-full" />
+                    <ProfilePhoto photo={sub.photo} name={sub.name} size="sm" />
                     <div>
                       <p className="text-sm font-semibold">{sub.name}</p>
                       <p className="text-xs text-gray-500">{sub.email}</p>
@@ -112,7 +112,7 @@ export function AdminSubscriptions() {
         {selectedSub && (
           <div className="space-y-6">
             <div className="flex justify-center mb-6">
-              <img src={selectedSub.photo} alt={selectedSub.name} className="w-24 h-24 rounded-full border-2 border-gray-200" />
+              <ProfilePhoto photo={selectedSub.photo} name={selectedSub.name} size="lg" />
             </div>
             
             <div className="space-y-4">
@@ -128,6 +128,12 @@ export function AdminSubscriptions() {
                 <label className="text-xs font-semibold text-gray-500 uppercase">CRN</label>
                 <p className="text-sm font-medium text-gray-900">{selectedSub.crn}</p>
               </div>
+              {selectedSub.description && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Sobre mim</label>
+                  <p className="text-sm leading-6 text-gray-700">{selectedSub.description}</p>
+                </div>
+              )}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase">Especialidades</label>
                 <div className="flex flex-wrap gap-2 mt-1">
@@ -160,6 +166,27 @@ export function AdminSubscriptions() {
           </div>
         )}
       </Drawer>
+    </div>
+  );
+}
+
+function ProfilePhoto({ photo, name, size }: { photo?: string; name: string; size: 'sm' | 'lg' }) {
+  const initials = name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+  const className = size === 'lg'
+    ? 'w-24 h-24 rounded-full border-2 border-gray-200 object-cover'
+    : 'w-8 h-8 rounded-full object-cover';
+
+  if (photo) return <img src={photo} alt={name} className={className} />;
+
+  return (
+    <div className={`${className} flex items-center justify-center bg-emerald-100 text-xs font-bold text-emerald-800`}>
+      {initials || 'NM'}
     </div>
   );
 }

@@ -84,6 +84,69 @@ function normalizeSubscription(input) {
   return output;
 }
 
+function defaultProfileDescription(subscription) {
+  return subscription.description || 'Profissional cadastrado pela NutriMeet. Perfil em atualização pela equipe administrativa.';
+}
+
+async function upsertNutritionistFromSubscription(db, subscription) {
+  const id = `nutri-${subscription.id}`;
+  const created = await row(
+    db,
+    `
+      INSERT INTO nutritionists (
+        id,
+        name,
+        photo,
+        crn,
+        specialties,
+        approaches,
+        city,
+        state,
+        description,
+        whatsapp,
+        status,
+        price,
+        experience,
+        education,
+        languages,
+        modality
+      )
+      VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7, $8, $9, $10, 'active', $11, $12, $13, $14::jsonb, $15::jsonb)
+      ON CONFLICT (id)
+      DO UPDATE SET
+        name = EXCLUDED.name,
+        photo = EXCLUDED.photo,
+        crn = EXCLUDED.crn,
+        specialties = EXCLUDED.specialties,
+        approaches = EXCLUDED.approaches,
+        description = EXCLUDED.description,
+        whatsapp = EXCLUDED.whatsapp,
+        status = 'active',
+        updated_at = NOW()
+      RETURNING *
+    `,
+    [
+      id,
+      subscription.name || '',
+      subscription.photo || '',
+      subscription.crn || '',
+      JSON.stringify(asArray(subscription.specialties)),
+      JSON.stringify(asArray(subscription.approaches)),
+      '',
+      '',
+      defaultProfileDescription(subscription),
+      subscription.phone || '',
+      40,
+      '',
+      '',
+      JSON.stringify(['Português']),
+      JSON.stringify(['online']),
+    ]
+  );
+
+  return normalizeNutritionist(created);
+}
+
 function normalizeListValue(value) {
   return asArray(value);
 }
@@ -164,7 +227,7 @@ async function createApp(options = {}) {
 
   const adminAuth = createAdminAuth(getTokenSecret());
   const app = express();
-  app.use(express.json({ limit: '1mb' }));
+  app.use(express.json({ limit: '8mb' }));
 
   app.get('/api/health', asyncHandler(async (req, res) => {
     await row(db, 'SELECT 1 AS ok');
@@ -233,6 +296,63 @@ async function createApp(options = {}) {
     res.json(result.map(normalizeSubscription));
   }));
 
+  app.post('/api/subscriptions', asyncHandler(async (req, res) => {
+    const data = req.body || {};
+    const name = String(data.name || '').trim();
+    const email = String(data.email || '').trim().toLowerCase();
+    const phone = String(data.phone || '').trim();
+    const crn = String(data.crn || '').trim();
+    const description = String(data.description || '').trim();
+    const photo = String(data.photo || '').trim();
+
+    if (!name || !email || !phone || !crn || !photo) {
+      return res.status(400).json({ error: 'missing required fields' });
+    }
+
+    if (!/^data:image\/(jpeg|jpg|png|webp);base64,/.test(photo)) {
+      return res.status(400).json({ error: 'invalid photo' });
+    }
+
+    if (photo.length > 2_000_000) {
+      return res.status(413).json({ error: 'photo too large' });
+    }
+
+    const id = data.id || `sub-${Date.now()}`;
+    const created = await row(
+      db,
+      `
+        INSERT INTO subscriptions (
+          id,
+          name,
+          email,
+          phone,
+          crn,
+          description,
+          specialties,
+          approaches,
+          status,
+          date,
+          photo
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, 'pending', NOW(), $9)
+        RETURNING *
+      `,
+      [
+        id,
+        name,
+        email,
+        phone,
+        crn,
+        description,
+        JSON.stringify(asArray(data.specialties)),
+        JSON.stringify(asArray(data.approaches)),
+        photo,
+      ]
+    );
+
+    return res.status(201).json(normalizeSubscription(created));
+  }));
+
   app.put('/api/subscriptions/:id/status', adminAuth, asyncHandler(async (req, res) => {
     const status = req.body?.status;
     if (!['pending', 'approved', 'rejected'].includes(status)) {
@@ -246,6 +366,9 @@ async function createApp(options = {}) {
     );
 
     if (!updated) return res.status(404).json({ error: 'subscription not found' });
+    if (status === 'approved') {
+      await upsertNutritionistFromSubscription(db, normalizeSubscription(updated));
+    }
     return res.json(normalizeSubscription(updated));
   }));
 

@@ -36,6 +36,7 @@ export interface Subscription {
   email: string;
   phone: string;
   crn: string;
+  description?: string;
   specialties: string[];
   approaches: string[];
   status: 'pending' | 'approved' | 'rejected';
