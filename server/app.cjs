@@ -7,6 +7,7 @@ const { initializeDatabase } = require('./schema.cjs');
 const JSON_ARRAY_FIELDS = new Set(['specialties', 'approaches', 'languages', 'modality']);
 const NUTRITIONIST_STATUSES = new Set(['active', 'pending', 'rejected']);
 const DEFAULT_ADMIN_TOKEN_SECRET = 'nutrimeet-default-admin-session-secret';
+const PUBLIC_BROWSE_CACHE_TTL_MS = Number(process.env.PUBLIC_BROWSE_CACHE_TTL_MS || 15_000);
 const NUTRITIONIST_FIELDS = [
   'name',
   'photo',
@@ -24,6 +25,7 @@ const NUTRITIONIST_FIELDS = [
   'languages',
   'modality',
 ];
+let publicBrowseCache = null;
 
 function asyncHandler(fn) {
   return (req, res, next) => {
@@ -171,6 +173,10 @@ function valuesAreInList(values, availableValues) {
   return values.length > 0 && values.every((value) => allowed.has(value));
 }
 
+function clearPublicBrowseCache() {
+  publicBrowseCache = null;
+}
+
 function getTokenSecret() {
   return process.env.ADMIN_TOKEN_SECRET || process.env.ADMIN_TOKEN || DEFAULT_ADMIN_TOKEN_SECRET;
 }
@@ -279,6 +285,33 @@ async function createApp(options = {}) {
   app.get('/api/nutritionists', asyncHandler(async (req, res) => {
     const result = await rows(db, 'SELECT * FROM nutritionists ORDER BY created_at DESC, name ASC');
     res.json(result.map(normalizeNutritionist));
+  }));
+
+  app.get('/api/search-data', asyncHandler(async (req, res) => {
+    const now = Date.now();
+    if (publicBrowseCache && publicBrowseCache.expiresAt > now) {
+      return res.json(publicBrowseCache.data);
+    }
+
+    const [nutritionists, specialties, approaches, states] = await Promise.all([
+      rows(db, "SELECT * FROM nutritionists WHERE status = 'active' ORDER BY created_at DESC, name ASC"),
+      getListValues(db, 'specialties'),
+      getListValues(db, 'approaches'),
+      getListValues(db, 'states'),
+    ]);
+    const data = {
+      nutritionists: nutritionists.map(normalizeNutritionist),
+      specialties,
+      approaches,
+      states,
+    };
+
+    publicBrowseCache = {
+      expiresAt: now + PUBLIC_BROWSE_CACHE_TTL_MS,
+      data,
+    };
+
+    return res.json(data);
   }));
 
   app.get('/api/nutritionists/:id', asyncHandler(async (req, res) => {
@@ -409,6 +442,7 @@ async function createApp(options = {}) {
     if (status === 'approved') {
       await upsertNutritionistFromSubscription(db, normalizeSubscription(updated));
     }
+    clearPublicBrowseCache();
     return res.json(normalizeSubscription(updated));
   }));
 
@@ -457,6 +491,7 @@ async function createApp(options = {}) {
     );
 
     if (!updated) return res.status(404).json({ error: 'nutritionist not found' });
+    clearPublicBrowseCache();
     return res.json(normalizeNutritionist(updated));
   }));
 
@@ -512,21 +547,25 @@ async function createApp(options = {}) {
       ]
     );
 
+    clearPublicBrowseCache();
     return res.status(201).json(normalizeNutritionist(created));
   }));
 
   app.delete('/api/nutritionists/:id', adminAuth, asyncHandler(async (req, res) => {
     await db.query('DELETE FROM nutritionists WHERE id = $1', [req.params.id]);
+    clearPublicBrowseCache();
     res.json({ deleted: true });
   }));
 
   app.delete('/api/nutritionists', adminAuth, asyncHandler(async (req, res) => {
     await db.query('DELETE FROM nutritionists');
+    clearPublicBrowseCache();
     res.json({ deletedAll: true });
   }));
 
   app.delete('/api/subscriptions', adminAuth, asyncHandler(async (req, res) => {
     await db.query('DELETE FROM subscriptions');
+    clearPublicBrowseCache();
     res.json({ deletedAll: true });
   }));
 
@@ -546,6 +585,7 @@ async function createApp(options = {}) {
       [req.params.key, JSON.stringify(value)]
     );
 
+    clearPublicBrowseCache();
     return res.json({ key: req.params.key, value });
   }));
 

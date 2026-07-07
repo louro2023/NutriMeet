@@ -3,7 +3,7 @@ import type React from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, LayoutGrid, List, MapPin, Search, Stethoscope } from 'lucide-react';
-import { getApproaches, getNutritionists, getSpecialties, getStates } from '../lib/api';
+import { getSearchData } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
@@ -21,16 +21,39 @@ export function FindNutritionist() {
   const [approaches, setApproaches] = useState<string[]>([]);
   const [states, setStates] = useState<string[]>([]);
   const [shuffledList, setShuffledList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const itemsPerPage = 9;
 
   useEffect(() => {
-    getNutritionists().then((all: any[]) => {
-      const active = all.filter((item) => item.status === 'active');
-      setShuffledList([...active].sort(() => 0.5 - Math.random()));
-    }).catch(() => setShuffledList([]));
-    getSpecialties().then(setSpecialties).catch(() => setSpecialties([]));
-    getApproaches().then(setApproaches).catch(() => setApproaches([]));
-    getStates().then(setStates).catch(() => setStates([]));
+    let active = true;
+
+    setLoading(true);
+    setLoadError('');
+    getSearchData()
+      .then((data) => {
+        if (!active) return;
+        const activeNutritionists = data.nutritionists.filter((item) => item.status === 'active');
+        setShuffledList([...activeNutritionists].sort(() => 0.5 - Math.random()));
+        setSpecialties(data.specialties);
+        setApproaches(data.approaches);
+        setStates(data.states);
+      })
+      .catch(() => {
+        if (!active) return;
+        setShuffledList([]);
+        setSpecialties([]);
+        setApproaches([]);
+        setStates([]);
+        setLoadError('Não foi possível carregar os profissionais agora.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const filteredData = useMemo(() => {
@@ -133,7 +156,11 @@ export function FindNutritionist() {
             <div className="flex-1">
               <div className="mb-6 flex items-center justify-between rounded-lg border border-emerald-100 bg-white/90 p-4 shadow-sm">
                 <span className="font-medium text-slate-600">
-                  Encontrados <span className="font-bold text-emerald-600">{filteredData.length}</span> profissionais
+                  {loading ? (
+                    'Carregando profissionais...'
+                  ) : (
+                    <>Encontrados <span className="font-bold text-emerald-600">{filteredData.length}</span> profissionais</>
+                  )}
                 </span>
                 <div className="flex gap-2">
                   <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="icon" onClick={() => setViewMode('grid')}>
@@ -146,63 +173,71 @@ export function FindNutritionist() {
               </div>
 
               <div className={viewMode === 'grid' ? 'grid gap-6 sm:grid-cols-2 xl:grid-cols-3' : 'flex flex-col gap-6'}>
-                <AnimatePresence>
-                  {paginatedData.map((nutri) => (
-                    <motion.div
-                      layout
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      key={nutri.id}
-                    >
-                      <Card className={`flex h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-emerald-950/10 ${viewMode === 'list' ? 'flex-col sm:flex-row' : 'flex-col'}`}>
-                        <div className={`${viewMode === 'list' ? 'w-full shrink-0 sm:w-48' : 'w-full'} flex flex-col items-center justify-center border-b border-emerald-100 bg-emerald-50/60 p-6 sm:border-b-0 sm:border-r`}>
-                          <div className="relative">
-                            <img src={nutri.photo} alt={nutri.name} className="h-24 w-24 rounded-full border-4 border-white object-cover shadow-sm" />
-                            <BadgeCheck className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-white text-emerald-500" />
-                          </div>
-                          <span className="mt-3 text-xs font-mono text-slate-500">CRN: {nutri.crn}</span>
-                        </div>
-
-                        <div className="flex flex-1 flex-col p-6">
-                          <div className="mb-2 flex items-start justify-between">
-                            <h3 className="text-lg font-bold leading-tight text-emerald-950">{nutri.name}</h3>
-                            <Badge variant="secondary" className="ml-2 shrink-0 bg-lime-100 text-emerald-900">
-                              R$ {nutri.price}
-                            </Badge>
+                {loading ? (
+                  <LoadingCards viewMode={viewMode} />
+                ) : (
+                  <AnimatePresence>
+                    {paginatedData.map((nutri) => (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        key={nutri.id}
+                      >
+                        <Card className={`flex h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-emerald-950/10 ${viewMode === 'list' ? 'flex-col sm:flex-row' : 'flex-col'}`}>
+                          <div className={`${viewMode === 'list' ? 'w-full shrink-0 sm:w-48' : 'w-full'} flex flex-col items-center justify-center border-b border-emerald-100 bg-emerald-50/60 p-6 sm:border-b-0 sm:border-r`}>
+                            <div className="relative">
+                              <img src={nutri.photo} alt={nutri.name} className="h-24 w-24 rounded-full border-4 border-white object-cover shadow-sm" />
+                              <BadgeCheck className="absolute bottom-0 right-0 h-6 w-6 rounded-full bg-white text-emerald-500" />
+                            </div>
+                            <span className="mt-3 text-xs font-mono text-slate-500">CRN: {nutri.crn}</span>
                           </div>
 
-                          <div className="mb-4 flex flex-wrap gap-2">
-                            {nutri.specialties.map((specialty: string) => (
-                              <span key={specialty} className="rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">{specialty}</span>
-                            ))}
-                          </div>
+                          <div className="flex flex-1 flex-col p-6">
+                            <div className="mb-2 flex items-start justify-between">
+                              <h3 className="text-lg font-bold leading-tight text-emerald-950">{nutri.name}</h3>
+                              <Badge variant="secondary" className="ml-2 shrink-0 bg-lime-100 text-emerald-900">
+                                R$ {nutri.price}
+                              </Badge>
+                            </div>
 
-                          <p className="mb-6 line-clamp-3 flex-1 text-sm leading-6 text-slate-600">
-                            {nutri.description}
-                          </p>
+                            <div className="mb-4 flex flex-wrap gap-2">
+                              {nutri.specialties.map((specialty: string) => (
+                                <span key={specialty} className="rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">{specialty}</span>
+                              ))}
+                            </div>
 
-                          <div className="mt-auto flex gap-3">
-                            <Button asChild className="flex-1" variant="outline">
-                              <Link to={`/nutricionista/${encodeURIComponent(nutri.id)}`}>Ver perfil</Link>
-                            </Button>
-                            <Button className="flex-1" onClick={() => window.open(`https://wa.me/${nutri.whatsapp}`, '_blank')}>
-                              Agendar
-                            </Button>
+                            <p className="mb-6 line-clamp-3 flex-1 text-sm leading-6 text-slate-600">
+                              {nutri.description}
+                            </p>
+
+                            <div className="mt-auto flex gap-3">
+                              <Button asChild className="flex-1" variant="outline">
+                                <Link to={`/nutricionista/${encodeURIComponent(nutri.id)}`}>Ver perfil</Link>
+                              </Button>
+                              <Button className="flex-1" onClick={() => window.open(`https://wa.me/${nutri.whatsapp}`, '_blank')}>
+                                Agendar
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                )}
               </div>
 
-              {filteredData.length === 0 && (
+              {!loading && filteredData.length === 0 && (
                 <div className="rounded-lg border border-dashed border-emerald-200 bg-white py-20 text-center">
                   <Search className="mx-auto mb-4 h-12 w-12 text-emerald-200" />
-                  <h3 className="text-lg font-bold text-emerald-950">Nenhum profissional encontrado</h3>
-                  <p className="text-slate-500">Tente ajustar seus filtros de busca.</p>
+                  <h3 className="text-lg font-bold text-emerald-950">
+                    {loadError || 'Nenhum profissional encontrado'}
+                  </h3>
+                  <p className="text-slate-500">
+                    {loadError ? 'Tente atualizar a página em alguns instantes.' : 'Tente ajustar seus filtros de busca.'}
+                  </p>
                 </div>
               )}
 
@@ -231,6 +266,40 @@ export function FindNutritionist() {
         </div>
       </section>
     </div>
+  );
+}
+
+function LoadingCards({ viewMode }: { viewMode: 'grid' | 'list' }) {
+  return (
+    <>
+      {Array.from({ length: viewMode === 'grid' ? 6 : 3 }).map((_, index) => (
+        <Card
+          key={index}
+          className={`flex h-full animate-pulse overflow-hidden ${viewMode === 'list' ? 'flex-col sm:flex-row' : 'flex-col'}`}
+        >
+          <div className={`${viewMode === 'list' ? 'w-full shrink-0 sm:w-48' : 'w-full'} flex flex-col items-center justify-center border-b border-emerald-100 bg-emerald-50/70 p-6 sm:border-b-0 sm:border-r`}>
+            <div className="h-24 w-24 rounded-full bg-emerald-100" />
+            <div className="mt-3 h-3 w-20 rounded-full bg-emerald-100" />
+          </div>
+          <div className="flex flex-1 flex-col p-6">
+            <div className="mb-4 h-5 w-2/3 rounded-full bg-emerald-100" />
+            <div className="mb-5 flex gap-2">
+              <div className="h-6 w-24 rounded-md bg-emerald-50" />
+              <div className="h-6 w-20 rounded-md bg-emerald-50" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-3 w-full rounded-full bg-slate-100" />
+              <div className="h-3 w-5/6 rounded-full bg-slate-100" />
+              <div className="h-3 w-2/3 rounded-full bg-slate-100" />
+            </div>
+            <div className="mt-8 flex gap-3">
+              <div className="h-10 flex-1 rounded-full bg-emerald-50" />
+              <div className="h-10 flex-1 rounded-full bg-emerald-100" />
+            </div>
+          </div>
+        </Card>
+      ))}
+    </>
   );
 }
 

@@ -34,6 +34,15 @@ describe('API basic', () => {
     expect(Array.isArray(res.body)).toBe(true);
   });
 
+  test('GET /api/search-data returns public browse data', async () => {
+    const res = await request(app).get('/api/search-data');
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.nutritionists)).toBe(true);
+    expect(Array.isArray(res.body.specialties)).toBe(true);
+    expect(Array.isArray(res.body.approaches)).toBe(true);
+    expect(Array.isArray(res.body.states)).toBe(true);
+  });
+
   test('GET /api/nutritionists/:id returns 404 for missing profile', async () => {
     const res = await request(app).get('/api/nutritionists/missing-profile');
     expect(res.status).toBe(404);
@@ -121,6 +130,10 @@ describe('API basic', () => {
     expect(profileRes.body.approaches).toEqual(['Comportamental']);
     expect(profileRes.body.city).toBe('São Paulo');
     expect(profileRes.body.state).toBe('SP');
+
+    const searchRes = await request(app).get('/api/search-data');
+    expect(searchRes.status).toBe(200);
+    expect(searchRes.body.nutritionists.some((item) => item.id === profileRes.body.id)).toBe(true);
   });
 
   test('Public subscription rejects profile details outside system lists', async () => {

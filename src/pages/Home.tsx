@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Apple, BadgeCheck, Brain, ChevronDown, HeartPulse, MessageCircle, Search, Sparkles, UserCheck } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
-import { getFaqs, getTestimonials } from '../lib/api';
+import { getFaqs, getTestimonials, preloadSearchData } from '../lib/api';
 import foodHero from '../assets/food-hero.jpg';
 
 const containerVariants = {
@@ -101,7 +101,9 @@ export function Home() {
 
             <motion.div variants={itemVariants} className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="text-base">
-                <Link to="/encontre-nutricionista">Encontrar nutricionista</Link>
+                <Link to="/encontre-nutricionista" onFocus={preloadSearchData} onMouseEnter={preloadSearchData}>
+                  Encontrar nutricionista
+                </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="bg-white/80 text-base backdrop-blur">
                 <Link to="/sou-nutricionista">Sou nutricionista</Link>

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Leaf, Mail, MapPin, Phone, Twitter } from 'lucide-react';
+import { preloadSearchData } from '../lib/api';
 
 export function Footer() {
   return (
@@ -26,7 +27,7 @@ export function Footer() {
           <div>
             <h4 className="mb-4 text-sm font-bold uppercase text-lime-200">Explore</h4>
             <ul className="space-y-3 text-sm text-emerald-50/75">
-              <li><Link to="/encontre-nutricionista" className="hover:text-lime-200">Encontrar profissional</Link></li>
+              <li><Link to="/encontre-nutricionista" onFocus={preloadSearchData} onMouseEnter={preloadSearchData} className="hover:text-lime-200">Encontrar profissional</Link></li>
               <li><Link to="/sou-nutricionista" className="hover:text-lime-200">Cadastrar nutricionista</Link></li>
               <li><Link to="/" className="hover:text-lime-200">Como funciona</Link></li>
             </ul>

@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Leaf, Menu, ShieldCheck, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from './ui/button';
+import { preloadSearchData } from '../lib/api';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,6 +30,8 @@ export function Navbar() {
               <Link
                 key={link.path}
                 to={link.path}
+                onFocus={link.path === '/encontre-nutricionista' ? preloadSearchData : undefined}
+                onMouseEnter={link.path === '/encontre-nutricionista' ? preloadSearchData : undefined}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                   location.pathname === link.path
                     ? 'bg-emerald-50 text-emerald-700'
@@ -66,6 +69,8 @@ export function Navbar() {
               <Link
                 key={link.path}
                 to={link.path}
+                onFocus={link.path === '/encontre-nutricionista' ? preloadSearchData : undefined}
+                onMouseEnter={link.path === '/encontre-nutricionista' ? preloadSearchData : undefined}
                 onClick={() => setIsOpen(false)}
                 className={`block rounded-lg px-3 py-2 text-base font-semibold ${
                   location.pathname === link.path
