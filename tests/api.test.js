@@ -1,11 +1,30 @@
 const request = require('supertest');
 const { createApp } = require('../server/app.cjs');
+const { createTestDatabase } = require('./testDb.cjs');
 
 let app;
+let db;
+let token;
 
 beforeAll(async () => {
-  const res = await createApp({});
+  process.env.ADMIN_EMAIL = 'admin@test.local';
+  process.env.ADMIN_PASSWORD = 'test-password';
+  process.env.ADMIN_TOKEN_SECRET = 'test-secret';
+
+  db = createTestDatabase();
+  const res = await createApp({ db });
   app = res.app;
+
+  const login = await request(app)
+    .post('/api/admin/login')
+    .send({ email: process.env.ADMIN_EMAIL, password: process.env.ADMIN_PASSWORD });
+
+  expect(login.status).toBe(200);
+  token = login.body.token;
+});
+
+afterAll(async () => {
+  await db.close();
 });
 
 describe('API basic', () => {
@@ -16,12 +35,11 @@ describe('API basic', () => {
   });
 
   test('Admin create and delete nutritionist', async () => {
-    const token = process.env.ADMIN_TOKEN;
-    if (!token) throw new Error('ADMIN_TOKEN environment variable is required for admin tests');
     const nutri = { name: 'Test Nutri', crn: '0000/XX', specialties: ['Teste'], approaches: ['Teste'] };
     const createRes = await request(app).post('/api/nutritionists').set('x-admin-token', token).send(nutri);
     expect(createRes.status).toBe(201);
     expect(createRes.body.name).toBe('Test Nutri');
+    expect(createRes.body.specialties).toEqual(['Teste']);
 
     const id = createRes.body.id;
     const delRes = await request(app).delete(`/api/nutritionists/${id}`).set('x-admin-token', token);
@@ -30,13 +48,29 @@ describe('API basic', () => {
   });
 
   test('Admin update subscription status', async () => {
-    const token = process.env.ADMIN_TOKEN;
-    if (!token) throw new Error('ADMIN_TOKEN environment variable is required for admin tests');
-    const subs = await request(app).get('/api/subscriptions');
-    expect(subs.status).toBe(200);
-    if (subs.body.length === 0) return;
-    const id = subs.body[0].id;
-    const res = await request(app).put(`/api/subscriptions/${id}/status`).set('x-admin-token', token).send({ status: 'approved' });
+    await db.query(
+      `
+        INSERT INTO subscriptions (id, name, email, phone, crn, specialties, approaches, status, photo)
+        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9)
+      `,
+      [
+        'sub-test',
+        'Candidato Teste',
+        'candidato@test.local',
+        '11999999999',
+        '12345/SP',
+        JSON.stringify(['Teste']),
+        JSON.stringify(['Teste']),
+        'pending',
+        '',
+      ]
+    );
+
+    const res = await request(app)
+      .put('/api/subscriptions/sub-test/status')
+      .set('x-admin-token', token)
+      .send({ status: 'approved' });
+
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('approved');
   });
