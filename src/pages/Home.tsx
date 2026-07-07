@@ -68,6 +68,12 @@ export function Home() {
     getFaqs()
       .then((items) => setFaqs(items.length ? items : fallbackFaqs))
       .catch(() => setFaqs(fallbackFaqs));
+
+    const preloadTimer = window.setTimeout(() => {
+      preloadSearchData();
+    }, 800);
+
+    return () => window.clearTimeout(preloadTimer);
   }, []);
 
   return (
