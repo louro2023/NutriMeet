@@ -37,6 +37,8 @@ export interface Subscription {
   phone: string;
   crn: string;
   description?: string;
+  city?: string;
+  state?: string;
   specialties: string[];
   approaches: string[];
   status: 'pending' | 'approved' | 'rejected';

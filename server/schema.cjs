@@ -116,6 +116,8 @@ const CREATE_SCHEMA_SQL = `
     phone TEXT NOT NULL DEFAULT '',
     crn TEXT NOT NULL DEFAULT '',
     description TEXT NOT NULL DEFAULT '',
+    city TEXT NOT NULL DEFAULT '',
+    state TEXT NOT NULL DEFAULT '',
     specialties JSONB NOT NULL DEFAULT '[]'::jsonb,
     approaches JSONB NOT NULL DEFAULT '[]'::jsonb,
     status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
@@ -137,6 +139,8 @@ const CREATE_SCHEMA_SQL = `
 
 const MIGRATION_SQL = `
   ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
+  ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS city TEXT NOT NULL DEFAULT '';
+  ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS state TEXT NOT NULL DEFAULT '';
 `;
 
 function adminIdFor(email) {

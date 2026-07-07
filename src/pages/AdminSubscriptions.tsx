@@ -128,6 +128,12 @@ export function AdminSubscriptions() {
                 <label className="text-xs font-semibold text-gray-500 uppercase">CRN</label>
                 <p className="text-sm font-medium text-gray-900">{selectedSub.crn}</p>
               </div>
+              {(selectedSub.city || selectedSub.state) && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Localização</label>
+                  <p className="text-sm font-medium text-gray-900">{[selectedSub.city, selectedSub.state].filter(Boolean).join(', ')}</p>
+                </div>
+              )}
               {selectedSub.description && (
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase">Sobre mim</label>

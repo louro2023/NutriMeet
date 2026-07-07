@@ -85,11 +85,19 @@ describe('API basic', () => {
         phone: '11977777777',
         crn: '98765/SP',
         description: 'Atendimento humanizado e baseado em rotina real.',
+        city: 'São Paulo',
+        state: 'SP',
+        specialties: ['Nutrição Clínica'],
+        approaches: ['Comportamental'],
         photo,
       });
 
     expect(createRes.status).toBe(201);
     expect(createRes.body.photo).toBe(photo);
+    expect(createRes.body.specialties).toEqual(['Nutrição Clínica']);
+    expect(createRes.body.approaches).toEqual(['Comportamental']);
+    expect(createRes.body.city).toBe('São Paulo');
+    expect(createRes.body.state).toBe('SP');
 
     const approveRes = await request(app)
       .put(`/api/subscriptions/${createRes.body.id}/status`)
@@ -103,5 +111,30 @@ describe('API basic', () => {
     expect(profileRes.body.name).toBe('Dra. Foto Teste');
     expect(profileRes.body.photo).toBe(photo);
     expect(profileRes.body.status).toBe('active');
+    expect(profileRes.body.specialties).toEqual(['Nutrição Clínica']);
+    expect(profileRes.body.approaches).toEqual(['Comportamental']);
+    expect(profileRes.body.city).toBe('São Paulo');
+    expect(profileRes.body.state).toBe('SP');
+  });
+
+  test('Public subscription rejects profile details outside system lists', async () => {
+    const photo = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2w==';
+    const res = await request(app)
+      .post('/api/subscriptions')
+      .send({
+        name: 'Dra. Lista Teste',
+        email: 'lista@test.local',
+        phone: '11966666666',
+        crn: '56789/SP',
+        description: 'Atendimento com foco em rotina possivel.',
+        city: 'Sao Paulo',
+        state: 'SP',
+        specialties: ['Especialidade inexistente'],
+        approaches: ['Comportamental'],
+        photo,
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('invalid profile details');
   });
 });

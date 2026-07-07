@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, HeartHandshake, Sparkles, TrendingUp, UploadCloud, Users } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
-import { createSubscription } from '../lib/api';
+import { createSubscription, getApproaches, getSpecialties, getStates } from '../lib/api';
 import foodHero from '../assets/food-hero.jpg';
 
 type FormState = {
@@ -14,6 +14,10 @@ type FormState = {
   email: string;
   phone: string;
   description: string;
+  specialty: string;
+  approach: string;
+  city: string;
+  state: string;
   photo: string;
 };
 
@@ -23,6 +27,10 @@ const initialForm: FormState = {
   email: '',
   phone: '',
   description: '',
+  specialty: '',
+  approach: '',
+  city: '',
+  state: '',
   photo: '',
 };
 
@@ -31,6 +39,15 @@ export function ForNutritionists() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState<FormState>(initialForm);
+  const [specialties, setSpecialties] = useState<string[]>([]);
+  const [approaches, setApproaches] = useState<string[]>([]);
+  const [states, setStates] = useState<string[]>([]);
+
+  useEffect(() => {
+    getSpecialties().then(setSpecialties).catch(() => setSpecialties([]));
+    getApproaches().then(setApproaches).catch(() => setApproaches([]));
+    getStates().then(setStates).catch(() => setStates([]));
+  }, []);
 
   const updateForm = (field: keyof FormState, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -69,6 +86,11 @@ export function ForNutritionists() {
       return;
     }
 
+    if (!form.specialty || !form.approach || !form.city || !form.state) {
+      setError('Preencha especialidade, abordagem e localização para concluir a inscrição.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await createSubscription({
@@ -77,9 +99,11 @@ export function ForNutritionists() {
         email: form.email,
         phone: form.phone,
         description: form.description,
+        city: form.city,
+        state: form.state,
         photo: form.photo,
-        specialties: [],
-        approaches: [],
+        specialties: [form.specialty],
+        approaches: [form.approach],
       });
       setSubmitted(true);
       setForm(initialForm);
@@ -175,6 +199,39 @@ export function ForNutritionists() {
                 <Textarea required value={form.description} onChange={(event) => updateForm('description', event.target.value)} placeholder="Conte sobre sua trajetória, formação e abordagem de atendimento..." className="h-32" />
               </Field>
 
+              <div className="grid gap-6 md:grid-cols-2">
+                <Field label="Especialidade">
+                  <SelectField
+                    required
+                    value={form.specialty}
+                    onChange={(value) => updateForm('specialty', value)}
+                    placeholder="Selecione sua especialidade"
+                    options={specialties}
+                  />
+                </Field>
+                <Field label="Abordagem">
+                  <SelectField
+                    required
+                    value={form.approach}
+                    onChange={(value) => updateForm('approach', value)}
+                    placeholder="Selecione sua abordagem"
+                    options={approaches}
+                  />
+                </Field>
+                <Field label="Cidade">
+                  <Input required value={form.city} onChange={(event) => updateForm('city', event.target.value)} placeholder="Ex: São Paulo" />
+                </Field>
+                <Field label="Estado">
+                  <SelectField
+                    required
+                    value={form.state}
+                    onChange={(value) => updateForm('state', value)}
+                    placeholder="Selecione o estado"
+                    options={states}
+                  />
+                </Field>
+              </div>
+
               <Field label="Foto de perfil">
                 <label className="flex cursor-pointer flex-col items-center rounded-lg border-2 border-dashed border-emerald-200 bg-emerald-50/60 p-8 text-center transition-colors hover:bg-emerald-50">
                   {form.photo ? (
@@ -221,6 +278,32 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label className="text-sm font-semibold text-emerald-950">{label}</label>
       {children}
     </div>
+  );
+}
+
+function SelectField({
+  value,
+  onChange,
+  options,
+  placeholder,
+  required,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder: string;
+  required?: boolean;
+}) {
+  return (
+    <select
+      required={required}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="flex h-10 w-full rounded-lg border border-emerald-100 bg-white px-3 py-2 text-sm text-emerald-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+    >
+      <option value="">{placeholder}</option>
+      {options.map((option) => <option key={option} value={option}>{option}</option>)}
+    </select>
   );
 }
 

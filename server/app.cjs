@@ -55,6 +55,12 @@ function asArray(value) {
   return [];
 }
 
+function asTrimmedStringArray(value) {
+  return [...new Set(asArray(value)
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean))];
+}
+
 function asIso(value) {
   if (!value) return value;
   if (value instanceof Date) return value.toISOString();
@@ -78,6 +84,8 @@ function normalizeSubscription(input) {
   const output = { ...input };
   output.specialties = asArray(output.specialties);
   output.approaches = asArray(output.approaches);
+  output.city = output.city || '';
+  output.state = output.state || '';
   output.date = asIso(output.date);
   output.created_at = asIso(output.created_at);
   output.updated_at = asIso(output.updated_at);
@@ -119,6 +127,8 @@ async function upsertNutritionistFromSubscription(db, subscription) {
         crn = EXCLUDED.crn,
         specialties = EXCLUDED.specialties,
         approaches = EXCLUDED.approaches,
+        city = EXCLUDED.city,
+        state = EXCLUDED.state,
         description = EXCLUDED.description,
         whatsapp = EXCLUDED.whatsapp,
         status = 'active',
@@ -132,8 +142,8 @@ async function upsertNutritionistFromSubscription(db, subscription) {
       subscription.crn || '',
       JSON.stringify(asArray(subscription.specialties)),
       JSON.stringify(asArray(subscription.approaches)),
-      '',
-      '',
+      subscription.city || '',
+      subscription.state || '',
       defaultProfileDescription(subscription),
       subscription.phone || '',
       40,
@@ -149,6 +159,16 @@ async function upsertNutritionistFromSubscription(db, subscription) {
 
 function normalizeListValue(value) {
   return asArray(value);
+}
+
+async function getListValues(db, key) {
+  const result = await row(db, 'SELECT value FROM lists WHERE key = $1', [key]);
+  return result ? normalizeListValue(result.value) : [];
+}
+
+function valuesAreInList(values, availableValues) {
+  const allowed = new Set(availableValues);
+  return values.length > 0 && values.every((value) => allowed.has(value));
 }
 
 function getTokenSecret() {
@@ -267,18 +287,15 @@ async function createApp(options = {}) {
   }));
 
   app.get('/api/specialties', asyncHandler(async (req, res) => {
-    const result = await row(db, "SELECT value FROM lists WHERE key = 'specialties'");
-    res.json(result ? normalizeListValue(result.value) : []);
+    res.json(await getListValues(db, 'specialties'));
   }));
 
   app.get('/api/approaches', asyncHandler(async (req, res) => {
-    const result = await row(db, "SELECT value FROM lists WHERE key = 'approaches'");
-    res.json(result ? normalizeListValue(result.value) : []);
+    res.json(await getListValues(db, 'approaches'));
   }));
 
   app.get('/api/states', asyncHandler(async (req, res) => {
-    const result = await row(db, "SELECT value FROM lists WHERE key = 'states'");
-    res.json(result ? normalizeListValue(result.value) : []);
+    res.json(await getListValues(db, 'states'));
   }));
 
   app.get('/api/testimonials', asyncHandler(async (req, res) => {
@@ -303,10 +320,28 @@ async function createApp(options = {}) {
     const phone = String(data.phone || '').trim();
     const crn = String(data.crn || '').trim();
     const description = String(data.description || '').trim();
+    const city = String(data.city || '').trim();
+    const state = String(data.state || '').trim().toUpperCase();
     const photo = String(data.photo || '').trim();
+    const specialties = asTrimmedStringArray(data.specialties);
+    const approaches = asTrimmedStringArray(data.approaches);
 
-    if (!name || !email || !phone || !crn || !photo) {
+    if (!name || !email || !phone || !crn || !description || !city || !state || !photo || specialties.length === 0 || approaches.length === 0) {
       return res.status(400).json({ error: 'missing required fields' });
+    }
+
+    const [availableSpecialties, availableApproaches, availableStates] = await Promise.all([
+      getListValues(db, 'specialties'),
+      getListValues(db, 'approaches'),
+      getListValues(db, 'states'),
+    ]);
+
+    if (
+      !valuesAreInList(specialties, availableSpecialties) ||
+      !valuesAreInList(approaches, availableApproaches) ||
+      !availableStates.includes(state)
+    ) {
+      return res.status(400).json({ error: 'invalid profile details' });
     }
 
     if (!/^data:image\/(jpeg|jpg|png|webp);base64,/.test(photo)) {
@@ -328,13 +363,15 @@ async function createApp(options = {}) {
           phone,
           crn,
           description,
+          city,
+          state,
           specialties,
           approaches,
           status,
           date,
           photo
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, 'pending', NOW(), $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, 'pending', NOW(), $11)
         RETURNING *
       `,
       [
@@ -344,8 +381,10 @@ async function createApp(options = {}) {
         phone,
         crn,
         description,
-        JSON.stringify(asArray(data.specialties)),
-        JSON.stringify(asArray(data.approaches)),
+        city,
+        state,
+        JSON.stringify(specialties),
+        JSON.stringify(approaches),
         photo,
       ]
     );
