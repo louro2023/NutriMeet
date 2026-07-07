@@ -185,7 +185,7 @@ export function FindNutritionist() {
 
                           <div className="mt-auto flex gap-3">
                             <Button asChild className="flex-1" variant="outline">
-                              <Link to={`/nutricionista/${nutri.id}`}>Ver perfil</Link>
+                              <Link to={`/nutricionista/${encodeURIComponent(nutri.id)}`}>Ver perfil</Link>
                             </Button>
                             <Button className="flex-1" onClick={() => window.open(`https://wa.me/${nutri.whatsapp}`, '_blank')}>
                               Agendar

@@ -34,6 +34,12 @@ describe('API basic', () => {
     expect(Array.isArray(res.body)).toBe(true);
   });
 
+  test('GET /api/nutritionists/:id returns 404 for missing profile', async () => {
+    const res = await request(app).get('/api/nutritionists/missing-profile');
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('nutritionist not found');
+  });
+
   test('Admin create and delete nutritionist', async () => {
     const nutri = { name: 'Test Nutri', crn: '0000/XX', specialties: ['Teste'], approaches: ['Teste'] };
     const createRes = await request(app).post('/api/nutritionists').set('x-admin-token', token).send(nutri);

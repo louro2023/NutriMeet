@@ -35,7 +35,7 @@ export async function fetchJson(path: string, options: RequestInit = {}) {
 }
 
 export const getNutritionists = () => fetchJson('/api/nutritionists');
-export const getNutritionist = (id: string) => fetchJson(`/api/nutritionists/${id}`);
+export const getNutritionist = (id: string) => fetchJson(`/api/nutritionists/${encodeURIComponent(id)}`);
 export const getSpecialties = () => fetchJson('/api/specialties');
 export const getApproaches = () => fetchJson('/api/approaches');
 export const getStates = () => fetchJson('/api/states');

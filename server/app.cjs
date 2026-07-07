@@ -283,6 +283,7 @@ async function createApp(options = {}) {
 
   app.get('/api/nutritionists/:id', asyncHandler(async (req, res) => {
     const result = await row(db, 'SELECT * FROM nutritionists WHERE id = $1', [req.params.id]);
+    if (!result) return res.status(404).json({ error: 'nutritionist not found' });
     res.json(normalizeNutritionist(result));
   }));
 
