@@ -1,3 +1,15 @@
+export class ApiError extends Error {
+  status: number;
+  payload: unknown;
+
+  constructor(status: number, message: string, payload?: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.payload = payload;
+  }
+}
+
 export async function fetchJson(path: string, options: RequestInit = {}) {
   const headers: Record<string,string> = {};
   // include admin token from localStorage if present
@@ -14,7 +26,11 @@ export async function fetchJson(path: string, options: RequestInit = {}) {
   if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
 
   const res = await fetch(path, { ...options, headers });
-  if (!res.ok) throw new Error(`Fetch error ${res.status}`);
+  if (!res.ok) {
+    let payload: any = null;
+    try { payload = await res.json(); } catch(e) {}
+    throw new ApiError(res.status, payload?.error || `Fetch error ${res.status}`, payload);
+  }
   return res.json();
 }
 

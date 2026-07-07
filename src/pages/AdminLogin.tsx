@@ -4,7 +4,7 @@ import { Leaf, Lock } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
-import { loginAdmin } from '../lib/api';
+import { ApiError, loginAdmin } from '../lib/api';
 
 export function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -20,7 +20,11 @@ export function AdminLogin() {
       try { localStorage.setItem('adminToken', data.token); } catch(e) {}
       navigate('/admin');
     } catch (e) {
-      setError('Credenciais inválidas. Verifique seu e-mail e senha.');
+      if (e instanceof ApiError && e.status === 401) {
+        setError('Credenciais inválidas. Verifique seu e-mail e senha.');
+      } else {
+        setError('Erro no servidor. Verifique as variáveis DATABASE_URL e ADMIN_TOKEN_SECRET na Vercel.');
+      }
     }
   };
 

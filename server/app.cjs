@@ -88,7 +88,11 @@ function normalizeListValue(value) {
 }
 
 function getTokenSecret() {
-  const secret = process.env.ADMIN_TOKEN_SECRET || process.env.ADMIN_TOKEN;
+  return process.env.ADMIN_TOKEN_SECRET || process.env.ADMIN_TOKEN || null;
+}
+
+function requireTokenSecret() {
+  const secret = getTokenSecret();
   if (secret) return secret;
   if (process.env.NODE_ENV === 'production') {
     throw new Error('ADMIN_TOKEN_SECRET is required in production.');
@@ -149,7 +153,7 @@ function requestToken(req) {
 
 function createAdminAuth(secret) {
   return (req, res, next) => {
-    const admin = verifyAdminToken(requestToken(req), secret);
+    const admin = verifyAdminToken(requestToken(req), secret || requireTokenSecret());
     if (!admin) return res.status(401).json({ error: 'unauthorized' });
     req.admin = admin;
     return next();
@@ -172,7 +176,7 @@ async function createApp(options = {}) {
 
   app.get('/api/health', asyncHandler(async (req, res) => {
     await row(db, 'SELECT 1 AS ok');
-    res.json({ ok: true });
+    res.json({ ok: true, database: true, authConfigured: Boolean(getTokenSecret()) });
   }));
 
   app.post('/api/admin/login', asyncHandler(async (req, res) => {
@@ -194,7 +198,7 @@ async function createApp(options = {}) {
       return res.status(401).json({ error: 'invalid credentials' });
     }
 
-    return res.json({ token: signAdminToken(admin, getTokenSecret()) });
+    return res.json({ token: signAdminToken(admin, requireTokenSecret()) });
   }));
 
   app.get('/api/nutritionists', asyncHandler(async (req, res) => {
