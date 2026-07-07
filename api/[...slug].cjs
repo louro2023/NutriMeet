@@ -19,7 +19,13 @@ function normalizeApiUrl(req) {
 
   if (
     rewritten &&
-    (pathname === '/' || pathname === '/api/[...slug].cjs' || pathname === '/api/[...slug]')
+    (
+      pathname === '/' ||
+      pathname === '/api/index.cjs' ||
+      pathname === '/api/index' ||
+      pathname === '/api/[...slug].cjs' ||
+      pathname === '/api/[...slug]'
+    )
   ) {
     pathname = `/api/${rewritten.replace(/^\/+/, '')}`;
     parsed.searchParams.delete('path');
