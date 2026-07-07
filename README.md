@@ -77,6 +77,8 @@ For production persistence, set these environment variables in Vercel:
 
 If no variables are configured in Vercel, admin login still works with the built-in admin seed and in-memory database fallback, but saved data is temporary.
 
+Important: subscriptions and approved professionals only persist when the API is connected to PostgreSQL/Neon. If `/api/health` returns `"databaseMode": "memory"`, the admin panel can open, but new registrations may disappear between serverless cold starts and will not be reliable for production.
+
 The Vercel function in `api/[...slug].cjs` reuses the same Express app from `server/app.cjs`, so local API behavior and serverless behavior stay aligned.
 
 ### Hostinger

@@ -5,22 +5,62 @@ let cachedMode;
 let warnedAboutMemoryFallback = false;
 
 function getDatabaseUrl() {
-  return process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL;
+  return (
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.DATABASE_URL_UNPOOLED ||
+    process.env.NEON_DATABASE_URL
+  );
 }
 
-function shouldUseSsl(connectionString) {
+function hasPgEnvConfig() {
+  return Boolean(process.env.PGHOST && process.env.PGDATABASE && process.env.PGUSER && process.env.PGPASSWORD);
+}
+
+function shouldUseSsl(connectionStringOrHost = '') {
   if (process.env.PGSSL === 'false') return false;
-  if (connectionString.includes('sslmode=disable')) return false;
+  if (process.env.PGSSLMODE === 'disable') return false;
+  if (connectionStringOrHost.includes('sslmode=disable')) return false;
   return (
     process.env.PGSSL === 'true' ||
-    connectionString.includes('sslmode=require') ||
-    connectionString.includes('.neon.tech')
+    process.env.PGSSLMODE === 'require' ||
+    connectionStringOrHost.includes('sslmode=require') ||
+    connectionStringOrHost.includes('.neon.tech')
   );
+}
+
+function createPostgresConfig(connectionString) {
+  const base = {
+    allowExitOnIdle: true,
+    idleTimeoutMillis: Number(process.env.PG_IDLE_TIMEOUT_MS || 30000),
+    max: Number(process.env.PG_POOL_MAX || (process.env.VERCEL ? 1 : 5)),
+  };
+
+  if (connectionString) {
+    return {
+      ...base,
+      connectionString,
+      ...(shouldUseSsl(connectionString) ? { ssl: { rejectUnauthorized: false } } : {}),
+    };
+  }
+
+  return {
+    ...base,
+    host: process.env.PGHOST,
+    port: Number(process.env.PGPORT || 5432),
+    database: process.env.PGDATABASE,
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
+    ...(shouldUseSsl(process.env.PGHOST || '') ? { ssl: { rejectUnauthorized: false } } : {}),
+  };
 }
 
 function createPool() {
   const connectionString = getDatabaseUrl();
-  if (!connectionString) {
+  const pgEnvConfigAvailable = hasPgEnvConfig();
+  if (!connectionString && !pgEnvConfigAvailable) {
     if (!cachedPool) {
       const { newDb } = require('pg-mem');
       const memoryDb = newDb({ autoCreateForeignKeyIndices: true });
@@ -38,17 +78,7 @@ function createPool() {
   }
 
   if (!cachedPool) {
-    const config = {
-      connectionString,
-      allowExitOnIdle: true,
-      idleTimeoutMillis: Number(process.env.PG_IDLE_TIMEOUT_MS || 30000),
-      max: Number(process.env.PG_POOL_MAX || (process.env.VERCEL ? 1 : 5)),
-    };
-
-    if (shouldUseSsl(connectionString)) {
-      config.ssl = { rejectUnauthorized: false };
-    }
-
+    const config = createPostgresConfig(connectionString);
     cachedPool = new Pool(config);
     cachedMode = 'postgres';
     cachedPool.on('error', (error) => {

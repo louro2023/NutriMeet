@@ -1,9 +1,18 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Leaf, Users, FileText, Settings, LayoutDashboard, LogOut } from 'lucide-react';
+import { Leaf, Users, FileText, Settings, LayoutDashboard, LogOut, AlertTriangle } from 'lucide-react';
 import { ScrollRestoration } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { getHealth } from '../lib/api';
 
 export function AdminLayout() {
   const location = useLocation();
+  const [databaseMode, setDatabaseMode] = useState<string | null>(null);
+
+  useEffect(() => {
+    getHealth()
+      .then((health) => setDatabaseMode(health.databaseMode || 'unknown'))
+      .catch(() => setDatabaseMode('unknown'));
+  }, []);
 
   const menuItems = [
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
@@ -62,6 +71,17 @@ export function AdminLayout() {
           </h1>
         </header>
         <div className="p-8 max-w-7xl mx-auto">
+          {databaseMode === 'memory' && (
+            <div className="mb-6 flex gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-900">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-yellow-600" />
+              <div>
+                <p className="font-bold">Banco temporário em uso</p>
+                <p className="mt-1 leading-6">
+                  O sistema está sem conexão persistente com Neon/PostgreSQL. O login funciona, mas inscrições e profissionais podem desaparecer entre acessos ou deploys. Configure `DATABASE_URL` na Vercel para gerenciar dados reais.
+                </p>
+              </div>
+            </div>
+          )}
           <Outlet />
         </div>
       </main>
