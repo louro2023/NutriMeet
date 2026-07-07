@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Leaf, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader } from '../components/ui/card';
 import { ApiError, loginAdmin } from '../lib/api';
+import foodHero from '../assets/food-hero.jpg';
 
 export function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -29,14 +30,18 @@ export function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-xl border-none">
+    <div
+      className="relative flex min-h-screen items-center justify-center bg-cover bg-center p-4"
+      style={{ backgroundImage: `url(${foodHero})` }}
+    >
+      <div className="absolute inset-0 bg-emerald-950/45 backdrop-blur-[2px]" />
+      <Card className="relative w-full max-w-md border-white/40 bg-white/[0.92] shadow-2xl shadow-emerald-950/25 backdrop-blur">
         <CardHeader className="text-center pt-8 pb-4">
-          <div className="mx-auto w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-4 text-green-600">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
             <Lock className="h-8 w-8" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Acesso Restrito</h2>
-          <p className="text-sm text-gray-500">Painel Administrativo NutriMeet</p>
+          <h2 className="font-serif text-3xl font-bold text-emerald-950">Acesso restrito</h2>
+          <p className="text-sm text-slate-500">Painel administrativo NutriMeet</p>
         </CardHeader>
         <CardContent className="px-8 pb-8">
           <form onSubmit={handleLogin} className="space-y-4">

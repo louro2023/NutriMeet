@@ -1,10 +1,12 @@
-import { useParams, Link } from 'react-router-dom';
-import { MapPin, GraduationCap, Clock, Globe, ArrowLeft, MessageCircle } from 'lucide-react';
-import { getNutritionist } from '../lib/api';
 import { useEffect, useState } from 'react';
+import type React from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, Clock, Globe, GraduationCap, MapPin, MessageCircle } from 'lucide-react';
+import { getNutritionist } from '../lib/api';
+import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
+import foodHero from '../assets/food-hero.jpg';
 
 export function NutritionistProfile() {
   const { id } = useParams();
@@ -17,9 +19,9 @@ export function NutritionistProfile() {
 
   if (!nutri) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-[#f7fbf3]">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Profissional não encontrado</h2>
+          <h2 className="mb-4 font-serif text-3xl font-bold text-emerald-950">Profissional não encontrado</h2>
           <Button asChild>
             <Link to="/encontre-nutricionista">Voltar para busca</Link>
           </Button>
@@ -29,67 +31,62 @@ export function NutritionistProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Link to="/encontre-nutricionista" className="inline-flex items-center text-gray-500 hover:text-green-600 mb-8 transition-colors">
-          <ArrowLeft className="h-4 w-4 mr-2" />
+    <div className="min-h-screen bg-[#f7fbf3] pb-16">
+      <section
+        className="relative h-64 bg-cover bg-center"
+        style={{ backgroundImage: `url(${foodHero})` }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/76 via-emerald-950/36 to-transparent" />
+      </section>
+
+      <div className="mx-auto -mt-40 max-w-7xl px-4 sm:px-6 lg:px-8">
+        <Link to="/encontre-nutricionista" className="relative z-10 mb-8 inline-flex items-center rounded-full bg-white/[0.85] px-4 py-2 text-sm font-semibold text-emerald-900 shadow-sm backdrop-blur hover:bg-white">
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar para resultados
         </Link>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Info */}
-          <div className="lg:col-span-2 space-y-8">
-            <Card className="overflow-hidden border-none shadow-sm">
-              <div className="h-32 bg-gradient-to-r from-green-400 to-green-600"></div>
-              <CardContent className="px-8 pb-8">
-                <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-end -mt-16 mb-6">
-                  <img src={nutri.photo} alt={nutri.name} className="w-32 h-32 rounded-full border-4 border-white shadow-md object-cover" />
+        <div className="grid gap-8 lg:grid-cols-3">
+          <div className="space-y-8 lg:col-span-2">
+            <Card className="overflow-hidden shadow-xl shadow-emerald-950/10">
+              <CardContent className="p-8">
+                <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-end">
+                  <img src={nutri.photo} alt={nutri.name} className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg" />
                   <div className="flex-1">
-                    <h1 className="text-3xl font-extrabold text-gray-900">{nutri.name}</h1>
-                    <p className="text-sm font-mono text-gray-500 mt-1">CRN: {nutri.crn}</p>
+                    <Badge className="mb-3 bg-lime-100 text-emerald-900">CRN: {nutri.crn}</Badge>
+                    <h1 className="font-serif text-4xl font-extrabold text-emerald-950">{nutri.name}</h1>
+                    <p className="mt-3 text-slate-600">{nutri.city}, {nutri.state}</p>
                   </div>
                 </div>
 
                 <div className="mb-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Sobre mim</h3>
-                  <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{nutri.description}</p>
+                  <h3 className="mb-3 text-xl font-bold text-emerald-950">Sobre o atendimento</h3>
+                  <p className="whitespace-pre-wrap leading-8 text-slate-600">{nutri.description}</p>
                 </div>
 
-                <div className="grid sm:grid-cols-2 gap-8">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <GraduationCap className="h-5 w-5 text-green-500" /> Formação
-                    </h3>
-                    <p className="text-gray-600">{nutri.education}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <Clock className="h-5 w-5 text-green-500" /> Experiência
-                    </h3>
-                    <p className="text-gray-600">{nutri.experience}</p>
-                  </div>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <InfoBlock icon={<GraduationCap className="h-5 w-5" />} title="Formação" text={nutri.education} />
+                  <InfoBlock icon={<Clock className="h-5 w-5" />} title="Experiência" text={nutri.experience} />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-none shadow-sm">
+            <Card>
               <CardContent className="p-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">Especialidades e Abordagens</h3>
-                
+                <h3 className="mb-6 text-2xl font-bold text-emerald-950">Especialidades e abordagens</h3>
                 <div className="mb-6">
-                  <h4 className="text-sm font-medium text-gray-500 mb-3 uppercase tracking-wider">Especialidades</h4>
+                  <h4 className="mb-3 text-sm font-bold uppercase text-slate-500">Especialidades</h4>
                   <div className="flex flex-wrap gap-2">
-                    {nutri.specialties.map(s => (
-                      <Badge key={s} variant="secondary" className="px-3 py-1 bg-green-50 text-green-700">{s}</Badge>
+                    {nutri.specialties.map((specialty: string) => (
+                      <Badge key={specialty} className="bg-emerald-100 px-3 py-1 text-emerald-800">{specialty}</Badge>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-3 uppercase tracking-wider">Abordagens</h4>
+                  <h4 className="mb-3 text-sm font-bold uppercase text-slate-500">Abordagens</h4>
                   <div className="flex flex-wrap gap-2">
-                    {nutri.approaches.map(a => (
-                      <Badge key={a} variant="outline" className="px-3 py-1 text-gray-600">{a}</Badge>
+                    {nutri.approaches.map((approach: string) => (
+                      <Badge key={approach} variant="outline" className="border-emerald-200 px-3 py-1 text-slate-600">{approach}</Badge>
                     ))}
                   </div>
                 </div>
@@ -97,42 +94,53 @@ export function NutritionistProfile() {
             </Card>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Card className="border-none shadow-sm sticky top-24">
+          <aside className="space-y-6">
+            <Card className="sticky top-24 shadow-xl shadow-emerald-950/10">
               <CardContent className="p-6">
-                <div className="text-center mb-6 pb-6 border-b border-gray-100">
-                  <p className="text-sm text-gray-500 mb-1">Valor da consulta</p>
-                  <p className="text-4xl font-extrabold text-gray-900">R$ {nutri.price}<span className="text-lg text-gray-500 font-normal">,00</span></p>
+                <div className="mb-6 border-b border-emerald-100 pb-6 text-center">
+                  <p className="mb-1 text-sm text-slate-500">Valor da consulta</p>
+                  <p className="font-serif text-5xl font-extrabold text-emerald-950">R$ {nutri.price}<span className="text-lg font-normal text-slate-500">,00</span></p>
                 </div>
 
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <MapPin className="h-5 w-5 text-gray-400" />
+                <div className="mb-8 space-y-4">
+                  <div className="flex items-center gap-3 text-slate-600">
+                    <MapPin className="h-5 w-5 text-emerald-500" />
                     <span>{nutri.city}, {nutri.state}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <Globe className="h-5 w-5 text-gray-400" />
-                    <span className="capitalize">{nutri.modality.join(' e ')}</span>
+                  <div className="flex items-center gap-3 text-slate-600">
+                    <Globe className="h-5 w-5 text-emerald-500" />
+                    <span className="capitalize">{nutri.modality?.join(' e ') || 'online'}</span>
                   </div>
                 </div>
 
-                <Button 
-                  size="lg" 
-                  className="w-full h-14 text-lg font-bold bg-[#25D366] hover:bg-[#128C7E] flex items-center gap-2"
+                <Button
+                  size="lg"
+                  className="flex h-14 w-full items-center gap-2 bg-[#25D366] text-base font-bold hover:bg-[#128C7E]"
                   onClick={() => window.open(`https://wa.me/${nutri.whatsapp}`, '_blank')}
                 >
                   <MessageCircle className="h-6 w-6" />
                   Agendar no WhatsApp
                 </Button>
-                <p className="text-xs text-center text-gray-400 mt-4">
-                  Ao clicar, você será redirecionado para o WhatsApp do profissional.
+                <p className="mt-4 text-center text-xs leading-5 text-slate-400">
+                  Você será redirecionado para conversar direto com o profissional.
                 </p>
               </CardContent>
             </Card>
-          </div>
+          </aside>
         </div>
       </div>
+    </div>
+  );
+}
+
+function InfoBlock({ icon, title, text }: { icon: React.ReactNode; title: string; text?: string }) {
+  return (
+    <div className="rounded-lg bg-emerald-50/70 p-5">
+      <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-emerald-950">
+        <span className="text-emerald-600">{icon}</span>
+        {title}
+      </h3>
+      <p className="leading-7 text-slate-600">{text || 'Informação em breve.'}</p>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { ScrollRestoration } from 'react-router-dom';
 
 export function MainLayout() {
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-gray-50/30">
+    <div className="min-h-screen flex flex-col font-sans bg-[#f7fbf3] text-emerald-950">
       <ScrollRestoration />
       <Navbar />
       <main className="flex-grow">

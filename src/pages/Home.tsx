@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import * as Accordion from '@radix-ui/react-accordion';
+import { motion } from 'framer-motion';
+import { Apple, BadgeCheck, Brain, ChevronDown, HeartPulse, MessageCircle, Search, Sparkles, UserCheck } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
-import { Search, UserCheck, MessageCircle, HeartPulse, Brain, Apple } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { getTestimonials, getFaqs } from '../lib/api';
-import { useEffect, useState } from 'react';
-import * as Accordion from '@radix-ui/react-accordion';
+import { getFaqs, getTestimonials } from '../lib/api';
+import foodHero from '../assets/food-hero.jpg';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -18,139 +18,196 @@ const itemVariants = {
   visible: { y: 0, opacity: 1 }
 };
 
+const fallbackTestimonials = [
+  {
+    id: 'fallback-1',
+    author: 'Maria Clara',
+    content: 'Encontrei uma profissional acolhedora e consegui organizar minha rotina alimentar sem radicalismos.',
+    rating: 5,
+  },
+  {
+    id: 'fallback-2',
+    author: 'Rafael Santos',
+    content: 'A consulta foi objetiva, humana e com um plano que cabia na minha vida real.',
+    rating: 5,
+  },
+  {
+    id: 'fallback-3',
+    author: 'Ana Paula',
+    content: 'Gostei da facilidade para escolher a abordagem e falar direto com a nutricionista pelo WhatsApp.',
+    rating: 5,
+  },
+];
+
+const fallbackFaqs = [
+  {
+    id: 'fallback-faq-1',
+    question: 'Como funciona a primeira consulta?',
+    answer: 'A primeira conversa é uma avaliação completa da sua rotina, objetivos, histórico de saúde e preferências alimentares.',
+  },
+  {
+    id: 'fallback-faq-2',
+    question: 'As consultas são online?',
+    answer: 'A plataforma prioriza atendimento online para facilitar o acesso, mas cada profissional informa sua modalidade no perfil.',
+  },
+  {
+    id: 'fallback-faq-3',
+    question: 'Qual é o valor das consultas?',
+    answer: 'A NutriMeet trabalha com proposta acessível e valor social anunciado no perfil dos profissionais participantes.',
+  },
+];
+
 export function Home() {
-  const [TESTIMONIALS, setTESTIMONIALS] = useState<any[]>([]);
-  const [FAQS, setFAQS] = useState<any[]>([]);
+  const [testimonials, setTestimonials] = useState<any[]>(fallbackTestimonials);
+  const [faqs, setFaqs] = useState<any[]>(fallbackFaqs);
 
   useEffect(() => {
-    getTestimonials().then(setTESTIMONIALS).catch(() => setTESTIMONIALS([]));
-    getFaqs().then(setFAQS).catch(() => setFAQS([]));
+    getTestimonials()
+      .then((items) => setTestimonials(items.length ? items : fallbackTestimonials))
+      .catch(() => setTestimonials(fallbackTestimonials));
+    getFaqs()
+      .then((items) => setFaqs(items.length ? items : fallbackFaqs))
+      .catch(() => setFaqs(fallbackFaqs));
   }, []);
+
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Hero Section */}
-      <section className="relative py-20 lg:py-32 overflow-hidden bg-white">
-        <div className="absolute inset-0 bg-green-50/50 -skew-y-3 origin-top-right transform z-0"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={containerVariants}
-              className="text-center lg:text-left"
-            >
-              <motion.h1 variants={itemVariants} className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight mb-6 leading-tight">
-                Sua saúde em <span className="text-green-500">boas mãos.</span> A qualquer momento.
-              </motion.h1>
-              <motion.p variants={itemVariants} className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto lg:mx-0">
-                Encontre nutricionistas especializados, agende consultas com facilidade e comece sua jornada para uma vida mais saudável e equilibrada por um valor acessível de R$40.
-              </motion.p>
-              <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button asChild size="lg" className="text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all">
-                  <Link to="/encontre-nutricionista">Encontrar Nutricionista</Link>
-                </Button>
-                <Button asChild variant="outline" size="lg" className="text-lg px-8 py-6 rounded-full bg-white hover:bg-gray-50 border-gray-200">
-                  <Link to="/sou-nutricionista">Sou Nutricionista</Link>
-                </Button>
-              </motion.div>
+    <div className="flex min-h-screen flex-col overflow-hidden">
+      <section
+        className="relative isolate min-h-[760px] overflow-hidden bg-cover bg-center"
+        style={{ backgroundImage: `url(${foodHero})` }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/[0.88] to-white/[0.18]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#f7fbf3]" />
+
+        <div className="relative z-10 mx-auto flex min-h-[760px] max-w-7xl items-center px-4 py-20 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+            className="max-w-2xl"
+          >
+            <motion.div variants={itemVariants} className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-4 py-2 text-sm font-semibold text-emerald-800 shadow-sm backdrop-blur">
+              <Sparkles className="h-4 w-4 text-lime-500" />
+              Nutrição acessível, acolhedora e feita para sua rotina
             </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative mt-12 lg:mt-0 w-full"
-            >
-              <div className="absolute -inset-4 bg-green-100 rounded-full blur-3xl opacity-50"></div>
-              <img
-                src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=2053&auto=format&fit=crop"
-                alt="Nutrição e Saúde"
-                className="relative rounded-3xl shadow-2xl object-cover h-[350px] sm:h-[450px] lg:h-[500px] w-full"
-              />
+
+            <motion.h1 variants={itemVariants} className="font-serif text-5xl font-extrabold leading-[1.02] text-emerald-950 sm:text-6xl lg:text-7xl">
+              Encontre cuidado nutricional com sabor de vida real.
+            </motion.h1>
+
+            <motion.p variants={itemVariants} className="mt-6 max-w-xl text-lg leading-8 text-slate-700 sm:text-xl">
+              Conecte-se a nutricionistas verificados, escolha a abordagem que combina com você e comece uma jornada mais leve, prática e saudável.
+            </motion.p>
+
+            <motion.div variants={itemVariants} className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg" className="text-base">
+                <Link to="/encontre-nutricionista">Encontrar nutricionista</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="bg-white/80 text-base backdrop-blur">
+                <Link to="/sou-nutricionista">Sou nutricionista</Link>
+              </Button>
             </motion.div>
-          </div>
+
+            <motion.div variants={itemVariants} className="mt-10 grid max-w-xl grid-cols-3 gap-3">
+              {[
+                ['R$40', 'valor social'],
+                ['100%', 'online e simples'],
+                ['CRN', 'perfis verificados'],
+              ].map(([value, label]) => (
+                <div key={label} className="rounded-lg border border-white/70 bg-white/[0.72] p-4 shadow-sm backdrop-blur">
+                  <p className="text-2xl font-extrabold text-emerald-900">{value}</p>
+                  <p className="mt-1 text-xs font-semibold uppercase text-slate-500">{label}</p>
+                </div>
+              ))}
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Como Funciona */}
-      <section className="py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Como Funciona</h2>
-            <p className="text-lg text-gray-600">Três passos simples para iniciar sua mudança de hábitos.</p>
-          </div>
-          
-          <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-8 px-4 -mx-4 md:mx-0 md:px-0 md:grid md:grid-cols-3 md:overflow-visible md:snap-none md:gap-8 md:pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+      <section className="bg-[#f7fbf3] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            eyebrow="Como funciona"
+            title="Três passos para sair da intenção e começar."
+            description="A experiência foi pensada para ser clara, rápida e humana, do primeiro filtro ao primeiro contato."
+          />
+
+          <div className="mt-12 grid gap-5 md:grid-cols-3">
             {[
-              { icon: Search, title: '1. Procurar', desc: 'Filtre por especialidade, abordagem e localização para encontrar o perfil ideal.' },
-              { icon: UserCheck, title: '2. Escolher', desc: 'Analise o perfil, formações e experiências dos nossos profissionais verificados.' },
-              { icon: MessageCircle, title: '3. Contatar', desc: 'Entre em contato direto via WhatsApp para agendar sua consulta.' }
+              { icon: Search, title: 'Procure pelo seu momento', desc: 'Filtre por especialidade, abordagem e localização para encontrar perfis alinhados ao seu objetivo.' },
+              { icon: UserCheck, title: 'Escolha com confiança', desc: 'Veja CRN, experiência, formação e estilo de atendimento antes de decidir.' },
+              { icon: MessageCircle, title: 'Converse direto', desc: 'Abra o WhatsApp do profissional e combine sua consulta sem burocracia.' },
             ].map((step, idx) => (
-              <motion.div
-                key={idx}
-                whileHover={{ y: -10 }}
-                className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center flex-none w-[85%] snap-center md:w-auto"
-              >
-                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6 text-green-600">
-                  <step.icon className="h-8 w-8" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
-                <p className="text-gray-600">{step.desc}</p>
+              <motion.div key={step.title} whileHover={{ y: -6 }} transition={{ duration: 0.2 }}>
+                <Card className="h-full overflow-hidden border-emerald-100 bg-white/90 shadow-md shadow-emerald-950/5">
+                  <CardContent className="p-7">
+                    <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-sm">
+                      <step.icon className="h-7 w-7" />
+                    </div>
+                    <p className="mb-3 text-sm font-bold uppercase text-lime-600">Passo {idx + 1}</p>
+                    <h3 className="text-2xl font-bold text-emerald-950">{step.title}</h3>
+                    <p className="mt-4 leading-7 text-slate-600">{step.desc}</p>
+                  </CardContent>
+                </Card>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Benefícios */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Por que escolher a NutriMeet?</h2>
-            <p className="text-lg text-gray-600">Nossa plataforma foi desenhada para oferecer a melhor experiência.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card className="border-none shadow-md bg-gray-50">
-              <CardContent className="pt-6">
-                <HeartPulse className="h-10 w-10 text-green-500 mb-4" />
-                <h3 className="text-lg font-bold mb-2">Saúde Acessível</h3>
-                <p className="text-gray-600">Consultas com valor social de R$40 para democratizar o acesso à nutrição de qualidade.</p>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-md bg-gray-50">
-              <CardContent className="pt-6">
-                <Brain className="h-10 w-10 text-green-500 mb-4" />
-                <h3 className="text-lg font-bold mb-2">Profissionais Verificados</h3>
-                <p className="text-gray-600">Todos os nutricionistas possuem CRN ativo e passam por rigorosa análise de perfil.</p>
-              </CardContent>
-            </Card>
-            <Card className="border-none shadow-md bg-gray-50">
-              <CardContent className="pt-6">
-                <Apple className="h-10 w-10 text-green-500 mb-4" />
-                <h3 className="text-lg font-bold mb-2">Diversas Abordagens</h3>
-                <p className="text-gray-600">Desde esportiva até comportamental. Encontre quem fala a sua língua.</p>
-              </CardContent>
-            </Card>
+      <section className="bg-white py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <p className="mb-4 text-sm font-bold uppercase text-lime-600">Por que a NutriMeet?</p>
+              <h2 className="font-serif text-4xl font-extrabold text-emerald-950 sm:text-5xl">
+                Saúde alimentar sem cara de dieta impossível.
+              </h2>
+              <p className="mt-5 text-lg leading-8 text-slate-600">
+                A plataforma une profissionais qualificados, preço acessível e um jeito simples de encontrar quem entende sua rotina.
+              </p>
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              {[
+                { icon: HeartPulse, title: 'Acesso mais leve', desc: 'Consulta com proposta social para aproximar nutrição de quem precisa começar.' },
+                { icon: BadgeCheck, title: 'Profissionais verificados', desc: 'Perfis com CRN, formação e informações claras para você decidir melhor.' },
+                { icon: Brain, title: 'Abordagem individual', desc: 'Escolha entre nutrição comportamental, clínica, esportiva, funcional e outras linhas.' },
+                { icon: Apple, title: 'Rotina possível', desc: 'Planos pensados para caber no cotidiano, sem promessa mágica ou culpa.' },
+              ].map((item) => (
+                <Card key={item.title} className="border-emerald-100 bg-[#f7fbf3]">
+                  <CardContent className="p-6">
+                    <item.icon className="mb-5 h-9 w-9 text-emerald-600" />
+                    <h3 className="text-xl font-bold text-emerald-950">{item.title}</h3>
+                    <p className="mt-3 leading-7 text-slate-600">{item.desc}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Depoimentos (Simples) */}
-      <section className="py-24 bg-green-50/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">O que dizem nossos pacientes</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {TESTIMONIALS.map((t) => (
-              <Card key={t.id} className="bg-white">
-                <CardContent className="pt-6">
-                  <div className="flex mb-4">
+      <section className="bg-emerald-950 py-20 text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            eyebrow="Experiências"
+            title="Gente real, rotina real, cuidado real."
+            description="Depoimentos de quem encontrou orientação profissional com mais praticidade."
+            dark
+          />
+
+          <div className="mt-12 grid gap-5 md:grid-cols-3">
+            {testimonials.map((t) => (
+              <Card key={t.id} className="border-white/10 bg-white/[0.08] text-white shadow-none backdrop-blur">
+                <CardContent className="p-7">
+                  <div className="mb-5 flex">
                     {[...Array(5)].map((_, i) => (
                       <Star key={i} filled={i < t.rating} />
                     ))}
                   </div>
-                  <p className="text-gray-700 italic mb-4">"{t.content}"</p>
-                  <p className="font-semibold text-gray-900">{t.author}</p>
+                  <p className="leading-7 text-emerald-50/85">"{t.content}"</p>
+                  <p className="mt-6 font-bold text-lime-200">{t.author}</p>
                 </CardContent>
               </Card>
             ))}
@@ -158,22 +215,24 @@ export function Home() {
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="py-24 bg-white">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Dúvidas Frequentes</h2>
-          </div>
-          <Accordion.Root type="single" collapsible className="space-y-4">
-            {FAQS.map((faq) => (
-              <Accordion.Item key={faq.id} value={faq.id} className="border rounded-lg bg-gray-50 overflow-hidden">
+      <section className="bg-[#f7fbf3] py-20">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            eyebrow="Dúvidas frequentes"
+            title="O essencial antes de marcar sua consulta."
+            description="Respostas rápidas para você entender como começar pela NutriMeet."
+          />
+
+          <Accordion.Root type="single" collapsible className="mt-10 space-y-3">
+            {faqs.map((faq) => (
+              <Accordion.Item key={faq.id} value={faq.id} className="overflow-hidden rounded-lg border border-emerald-100 bg-white shadow-sm">
                 <Accordion.Header>
-                  <Accordion.Trigger className="w-full flex justify-between items-center p-4 text-left font-semibold text-gray-900 hover:bg-gray-100 transition-colors [&[data-state=open]>svg]:rotate-180">
+                  <Accordion.Trigger className="flex w-full items-center justify-between gap-4 p-5 text-left text-base font-bold text-emerald-950 transition-colors hover:bg-emerald-50 [&[data-state=open]>svg]:rotate-180">
                     {faq.question}
-                    <ChevronDownIcon />
+                    <ChevronDown className="h-5 w-5 shrink-0 text-emerald-600 transition-transform" />
                   </Accordion.Trigger>
                 </Accordion.Header>
-                <Accordion.Content className="p-4 pt-0 text-gray-600 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                <Accordion.Content className="px-5 pb-5 leading-7 text-slate-600 data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
                   {faq.answer}
                 </Accordion.Content>
               </Accordion.Item>
@@ -185,18 +244,20 @@ export function Home() {
   );
 }
 
-function Star({ filled }: { filled: boolean; key?: React.Key }) {
+function SectionHeading({ eyebrow, title, description, dark = false }: { eyebrow: string; title: string; description: string; dark?: boolean }) {
   return (
-    <svg className={`w-5 h-5 ${filled ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20">
-      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-    </svg>
+    <div className="mx-auto max-w-3xl text-center">
+      <p className={`mb-4 text-sm font-bold uppercase ${dark ? 'text-lime-200' : 'text-lime-600'}`}>{eyebrow}</p>
+      <h2 className={`font-serif text-4xl font-extrabold sm:text-5xl ${dark ? 'text-white' : 'text-emerald-950'}`}>{title}</h2>
+      <p className={`mt-5 text-lg leading-8 ${dark ? 'text-emerald-50/70' : 'text-slate-600'}`}>{description}</p>
+    </div>
   );
 }
 
-function ChevronDownIcon() {
+function Star({ filled }: { filled: boolean; key?: React.Key }) {
   return (
-    <svg className="h-5 w-5 shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    <svg className={`h-5 w-5 ${filled ? 'text-lime-300' : 'text-white/25'}`} fill="currentColor" viewBox="0 0 20 20">
+      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
     </svg>
   );
 }
