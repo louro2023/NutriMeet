@@ -16,8 +16,8 @@ type FormState = {
   description: string;
   education: string;
   experience: string;
-  specialty: string;
-  approach: string;
+  specialties: string[];
+  approaches: string[];
   city: string;
   state: string;
   photo: string;
@@ -31,12 +31,14 @@ const initialForm: FormState = {
   description: '',
   education: '',
   experience: '',
-  specialty: '',
-  approach: '',
+  specialties: [],
+  approaches: [],
   city: '',
   state: '',
   photo: '',
 };
+
+const MAX_PROFILE_SELECTIONS = 3;
 
 export function ForNutritionists() {
   const [submitted, setSubmitted] = useState(false);
@@ -53,7 +55,7 @@ export function ForNutritionists() {
     getStates().then(setStates).catch(() => setStates([]));
   }, []);
 
-  const updateForm = (field: keyof FormState, value: string) => {
+  const updateForm = <Key extends keyof FormState>(field: Key, value: FormState[Key]) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
@@ -90,8 +92,8 @@ export function ForNutritionists() {
       return;
     }
 
-    if (!form.specialty || !form.approach || !form.city || !form.state) {
-      setError('Preencha especialidade, abordagem e localização para concluir a inscrição.');
+    if (form.specialties.length === 0 || form.approaches.length === 0 || !form.city || !form.state) {
+      setError('Selecione pelo menos uma especialidade, uma abordagem e preencha a localização para concluir a inscrição.');
       return;
     }
 
@@ -108,8 +110,8 @@ export function ForNutritionists() {
         city: form.city,
         state: form.state,
         photo: form.photo,
-        specialties: [form.specialty],
-        approaches: [form.approach],
+        specialties: form.specialties,
+        approaches: form.approaches,
       });
       setSubmitted(true);
       setForm(initialForm);
@@ -222,22 +224,22 @@ export function ForNutritionists() {
               </div>
 
               <div className="grid gap-6 md:grid-cols-2">
-                <Field label="Especialidade">
-                  <SelectField
-                    required
-                    value={form.specialty}
-                    onChange={(value) => updateForm('specialty', value)}
-                    placeholder="Selecione sua especialidade"
+                <Field label="Especialidades">
+                  <MultiSelectField
+                    values={form.specialties}
+                    onChange={(value) => updateForm('specialties', value)}
                     options={specialties}
+                    max={MAX_PROFILE_SELECTIONS}
+                    emptyText="Nenhuma especialidade disponível no momento."
                   />
                 </Field>
-                <Field label="Abordagem">
-                  <SelectField
-                    required
-                    value={form.approach}
-                    onChange={(value) => updateForm('approach', value)}
-                    placeholder="Selecione sua abordagem"
+                <Field label="Abordagens">
+                  <MultiSelectField
+                    values={form.approaches}
+                    onChange={(value) => updateForm('approaches', value)}
                     options={approaches}
+                    max={MAX_PROFILE_SELECTIONS}
+                    emptyText="Nenhuma abordagem disponível no momento."
                   />
                 </Field>
                 <Field label="Cidade">
@@ -303,6 +305,75 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div className="space-y-2">
       <label className="text-sm font-semibold text-emerald-950">{label}</label>
       {children}
+    </div>
+  );
+}
+
+function MultiSelectField({
+  values,
+  onChange,
+  options,
+  max,
+  emptyText,
+}: {
+  values: string[];
+  onChange: (value: string[]) => void;
+  options: string[];
+  max: number;
+  emptyText: string;
+}) {
+  const selectedValues = values.filter(Boolean);
+  const reachedLimit = selectedValues.length >= max;
+
+  const toggleOption = (option: string) => {
+    if (selectedValues.includes(option)) {
+      onChange(selectedValues.filter((value) => value !== option));
+      return;
+    }
+
+    if (reachedLimit) return;
+    onChange([...selectedValues, option]);
+  };
+
+  if (options.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed border-emerald-100 bg-white p-4 text-sm text-slate-500">
+        {emptyText}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-2 sm:grid-cols-2">
+        {options.map((option) => {
+          const selected = selectedValues.includes(option);
+          const disabled = !selected && reachedLimit;
+
+          return (
+            <label
+              key={option}
+              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition ${
+                selected
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-950'
+                  : 'border-emerald-100 bg-white text-slate-600'
+              } ${disabled ? 'cursor-not-allowed opacity-50' : 'hover:border-emerald-300'}`}
+            >
+              <input
+                type="checkbox"
+                checked={selected}
+                disabled={disabled}
+                onChange={() => toggleOption(option)}
+                className="mt-0.5 h-4 w-4 rounded text-emerald-600"
+              />
+              <span className="leading-5">{option}</span>
+            </label>
+          );
+        })}
+      </div>
+      <p className="text-xs font-medium text-slate-500">
+        Selecione até {max}. {selectedValues.length}/{max} selecionadas.
+      </p>
     </div>
   );
 }

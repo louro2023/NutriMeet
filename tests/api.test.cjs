@@ -127,16 +127,16 @@ describe('API basic', () => {
         experience: '5 anos de experiencia em atendimento clinico.',
         city: 'São Paulo',
         state: 'SP',
-        specialties: ['Nutrição Clínica'],
-        approaches: ['Comportamental'],
+        specialties: ['Nutri\u00e7\u00e3o Cl\u00ednica', 'Emagrecimento', 'Funcional'],
+        approaches: ['Comportamental', 'Mindful Eating', 'Sa\u00fade da Mulher'],
         photo,
       });
 
     expect(createRes.status).toBe(201);
     expect(createRes.body.photo).not.toBe(photo);
     await expectCompressedProfilePhoto(createRes.body.photo);
-    expect(createRes.body.specialties).toEqual(['Nutrição Clínica']);
-    expect(createRes.body.approaches).toEqual(['Comportamental']);
+    expect(createRes.body.specialties).toEqual(['Nutri\u00e7\u00e3o Cl\u00ednica', 'Emagrecimento', 'Funcional']);
+    expect(createRes.body.approaches).toEqual(['Comportamental', 'Mindful Eating', 'Sa\u00fade da Mulher']);
     expect(createRes.body.education).toBe('Graduacao em Nutricao pela USP. Pos-graduacao em Nutricao Clinica.');
     expect(createRes.body.experience).toBe('5 anos de experiencia em atendimento clinico.');
     expect(createRes.body.city).toBe('São Paulo');
@@ -155,8 +155,8 @@ describe('API basic', () => {
     expect(profileRes.body.photo).not.toBe(photo);
     await expectCompressedProfilePhoto(profileRes.body.photo);
     expect(profileRes.body.status).toBe('active');
-    expect(profileRes.body.specialties).toEqual(['Nutrição Clínica']);
-    expect(profileRes.body.approaches).toEqual(['Comportamental']);
+    expect(profileRes.body.specialties).toEqual(['Nutri\u00e7\u00e3o Cl\u00ednica', 'Emagrecimento', 'Funcional']);
+    expect(profileRes.body.approaches).toEqual(['Comportamental', 'Mindful Eating', 'Sa\u00fade da Mulher']);
     expect(profileRes.body.education).toBe('Graduacao em Nutricao pela USP. Pos-graduacao em Nutricao Clinica.');
     expect(profileRes.body.experience).toBe('5 anos de experiencia em atendimento clinico.');
     expect(profileRes.body.city).toBe('São Paulo');
@@ -165,6 +165,28 @@ describe('API basic', () => {
     const searchRes = await request(app).get('/api/search-data');
     expect(searchRes.status).toBe(200);
     expect(searchRes.body.nutritionists.some((item) => item.id === profileRes.body.id)).toBe(true);
+  });
+
+  test('Public subscription rejects more than three specialties or approaches', async () => {
+    const res = await request(app)
+      .post('/api/subscriptions')
+      .send({
+        name: 'Dra. Limite Teste',
+        email: 'limite@test.local',
+        phone: '11955555555',
+        crn: '45678/SP',
+        description: 'Atendimento com foco em rotina possivel.',
+        education: 'Graduacao em Nutricao.',
+        experience: 'Atendimento clinico.',
+        city: 'Sao Paulo',
+        state: 'SP',
+        specialties: ['Nutri\u00e7\u00e3o Cl\u00ednica', 'Emagrecimento', 'Funcional', 'Vegetariana'],
+        approaches: ['Comportamental', 'Mindful Eating', 'Sa\u00fade da Mulher', 'Low Carb'],
+        photo: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2w==',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('too many profile selections');
   });
 
   test('Public subscription rejects profile details outside system lists', async () => {

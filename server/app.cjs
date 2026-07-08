@@ -14,6 +14,7 @@ const PROFILE_PHOTO_JPEG_QUALITY = 74;
 const PROFILE_PHOTO_MAX_INPUT_LENGTH = 2_000_000;
 const PROFILE_PHOTO_MAX_STORED_LENGTH = 250_000;
 const PROFILE_PHOTO_DATA_URL_PATTERN = /^data:image\/(jpeg|jpg|png|webp);base64,/i;
+const MAX_PROFILE_SELECTIONS = 3;
 const NUTRITIONIST_FIELDS = [
   'name',
   'photo',
@@ -432,6 +433,10 @@ async function createApp(options = {}) {
 
     if (!name || !email || !phone || !crn || !description || !experience || !education || !city || !state || !photo || specialties.length === 0 || approaches.length === 0) {
       return res.status(400).json({ error: 'missing required fields' });
+    }
+
+    if (specialties.length > MAX_PROFILE_SELECTIONS || approaches.length > MAX_PROFILE_SELECTIONS) {
+      return res.status(400).json({ error: 'too many profile selections' });
     }
 
     const [availableSpecialties, availableApproaches, availableStates] = await Promise.all([

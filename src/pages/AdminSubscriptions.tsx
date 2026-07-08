@@ -155,7 +155,13 @@ export function AdminSubscriptions() {
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase">Especialidades</label>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  {selectedSub.specialties.map(s => <Badge key={s} variant="outline">{s}</Badge>)}
+                  {(selectedSub.specialties || []).map(s => <Badge key={s} variant="outline">{s}</Badge>)}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">Abordagens</label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {(selectedSub.approaches || []).map(a => <Badge key={a} variant="outline">{a}</Badge>)}
                 </div>
               </div>
               <div>
