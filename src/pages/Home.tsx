@@ -116,13 +116,6 @@ export function Home() {
               </Button>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="mt-6 max-w-xl rounded-lg border border-lime-200 bg-lime-50/90 p-4 shadow-sm backdrop-blur">
-              <p className="text-sm font-bold uppercase text-emerald-800">Preço social na NutriMeet</p>
-              <p className="mt-2 leading-7 text-slate-700">
-                Ao escolher um profissional pela plataforma, você já sabe o valor antes do primeiro contato: a consulta social é de R$40.
-              </p>
-            </motion.div>
-
             <motion.div variants={itemVariants} className="mt-10 grid max-w-xl grid-cols-3 gap-3">
               {[
                 ['R$40', 'consulta social'],
