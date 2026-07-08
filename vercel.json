@@ -17,6 +17,10 @@
       "dest": "/api/index.cjs?path=$1"
     },
     {
+      "src": "/sou-nutricionista/?",
+      "dest": "/sou-nutricionista/index.html"
+    },
+    {
       "handle": "filesystem"
     },
     {
