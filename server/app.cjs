@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const sharp = require('sharp');
 const { createDatabase } = require('./db.cjs');
 const { initializeDatabase } = require('./schema.cjs');
 
@@ -8,6 +9,11 @@ const JSON_ARRAY_FIELDS = new Set(['specialties', 'approaches', 'languages', 'mo
 const NUTRITIONIST_STATUSES = new Set(['active', 'pending', 'rejected']);
 const DEFAULT_ADMIN_TOKEN_SECRET = 'nutrimeet-default-admin-session-secret';
 const PUBLIC_BROWSE_CACHE_TTL_MS = Number(process.env.PUBLIC_BROWSE_CACHE_TTL_MS || 15_000);
+const PROFILE_PHOTO_MAX_DIMENSION = 300;
+const PROFILE_PHOTO_JPEG_QUALITY = 74;
+const PROFILE_PHOTO_MAX_INPUT_LENGTH = 2_000_000;
+const PROFILE_PHOTO_MAX_STORED_LENGTH = 250_000;
+const PROFILE_PHOTO_DATA_URL_PATTERN = /^data:image\/(jpeg|jpg|png|webp);base64,/i;
 const NUTRITIONIST_FIELDS = [
   'name',
   'photo',
@@ -86,6 +92,8 @@ function normalizeSubscription(input) {
   const output = { ...input };
   output.specialties = asArray(output.specialties);
   output.approaches = asArray(output.approaches);
+  output.experience = output.experience || '';
+  output.education = output.education || '';
   output.city = output.city || '';
   output.state = output.state || '';
   output.date = asIso(output.date);
@@ -94,12 +102,72 @@ function normalizeSubscription(input) {
   return output;
 }
 
+function apiError(status, message) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+}
+
+function decodePhotoDataUrl(photo) {
+  if (!PROFILE_PHOTO_DATA_URL_PATTERN.test(photo)) {
+    throw apiError(400, 'invalid photo');
+  }
+
+  const base64 = photo.slice(photo.indexOf(',') + 1).replace(/\s/g, '');
+  if (!base64 || base64.length % 4 === 1 || /[^A-Za-z0-9+/=]/.test(base64)) {
+    throw apiError(400, 'invalid photo');
+  }
+
+  return Buffer.from(base64, 'base64');
+}
+
+async function normalizeProfilePhoto(value, options = {}) {
+  const photo = String(value || '').trim();
+  if (!photo) return '';
+
+  if (!PROFILE_PHOTO_DATA_URL_PATTERN.test(photo)) {
+    if (options.requireDataUrl || photo.toLowerCase().startsWith('data:')) {
+      throw apiError(400, 'invalid photo');
+    }
+    return photo;
+  }
+
+  if (photo.length > PROFILE_PHOTO_MAX_INPUT_LENGTH) {
+    throw apiError(413, 'photo too large');
+  }
+
+  try {
+    const output = await sharp(decodePhotoDataUrl(photo))
+      .rotate()
+      .resize({
+        width: PROFILE_PHOTO_MAX_DIMENSION,
+        height: PROFILE_PHOTO_MAX_DIMENSION,
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .flatten({ background: '#ffffff' })
+      .jpeg({ quality: PROFILE_PHOTO_JPEG_QUALITY, mozjpeg: true })
+      .toBuffer();
+
+    const normalizedPhoto = `data:image/jpeg;base64,${output.toString('base64')}`;
+    if (normalizedPhoto.length > PROFILE_PHOTO_MAX_STORED_LENGTH) {
+      throw apiError(413, 'photo too large');
+    }
+
+    return normalizedPhoto;
+  } catch (error) {
+    if (error.status) throw error;
+    throw apiError(400, 'invalid photo');
+  }
+}
+
 function defaultProfileDescription(subscription) {
   return subscription.description || 'Profissional cadastrado pela NutriMeet. Perfil em atualização pela equipe administrativa.';
 }
 
 async function upsertNutritionistFromSubscription(db, subscription) {
   const id = `nutri-${subscription.id}`;
+  const photo = await normalizeProfilePhoto(subscription.photo || '');
   const created = await row(
     db,
     `
@@ -140,7 +208,7 @@ async function upsertNutritionistFromSubscription(db, subscription) {
     [
       id,
       subscription.name || '',
-      subscription.photo || '',
+      photo,
       subscription.crn || '',
       JSON.stringify(asArray(subscription.specialties)),
       JSON.stringify(asArray(subscription.approaches)),
@@ -149,8 +217,8 @@ async function upsertNutritionistFromSubscription(db, subscription) {
       defaultProfileDescription(subscription),
       subscription.phone || '',
       40,
-      '',
-      '',
+      subscription.experience || '',
+      subscription.education || '',
       JSON.stringify(['Português']),
       JSON.stringify(['online']),
     ]
@@ -354,13 +422,15 @@ async function createApp(options = {}) {
     const phone = String(data.phone || '').trim();
     const crn = String(data.crn || '').trim();
     const description = String(data.description || '').trim();
+    const experience = String(data.experience || '').trim();
+    const education = String(data.education || '').trim();
     const city = String(data.city || '').trim();
     const state = String(data.state || '').trim().toUpperCase();
-    const photo = String(data.photo || '').trim();
+    let photo = String(data.photo || '').trim();
     const specialties = asTrimmedStringArray(data.specialties);
     const approaches = asTrimmedStringArray(data.approaches);
 
-    if (!name || !email || !phone || !crn || !description || !city || !state || !photo || specialties.length === 0 || approaches.length === 0) {
+    if (!name || !email || !phone || !crn || !description || !experience || !education || !city || !state || !photo || specialties.length === 0 || approaches.length === 0) {
       return res.status(400).json({ error: 'missing required fields' });
     }
 
@@ -378,13 +448,7 @@ async function createApp(options = {}) {
       return res.status(400).json({ error: 'invalid profile details' });
     }
 
-    if (!/^data:image\/(jpeg|jpg|png|webp);base64,/.test(photo)) {
-      return res.status(400).json({ error: 'invalid photo' });
-    }
-
-    if (photo.length > 2_000_000) {
-      return res.status(413).json({ error: 'photo too large' });
-    }
+    photo = await normalizeProfilePhoto(photo, { requireDataUrl: true });
 
     const id = data.id || `sub-${Date.now()}`;
     const created = await row(
@@ -397,6 +461,8 @@ async function createApp(options = {}) {
           phone,
           crn,
           description,
+          experience,
+          education,
           city,
           state,
           specialties,
@@ -405,7 +471,7 @@ async function createApp(options = {}) {
           date,
           photo
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, 'pending', NOW(), $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12::jsonb, 'pending', NOW(), $13)
         RETURNING *
       `,
       [
@@ -415,6 +481,8 @@ async function createApp(options = {}) {
         phone,
         crn,
         description,
+        experience,
+        education,
         city,
         state,
         JSON.stringify(specialties),
@@ -455,24 +523,26 @@ async function createApp(options = {}) {
       return res.status(400).json({ error: 'invalid status' });
     }
 
-    NUTRITIONIST_FIELDS.forEach((field) => {
-      if (!(field in data)) return;
+    for (const field of NUTRITIONIST_FIELDS) {
+      if (!(field in data)) continue;
 
       if (JSON_ARRAY_FIELDS.has(field)) {
         values.push(JSON.stringify(asArray(data[field])));
         assignments.push(`${field} = $${values.length}::jsonb`);
-        return;
+        continue;
       }
 
       if (field === 'price') {
         values.push(Number(data[field]) || 0);
+      } else if (field === 'photo') {
+        values.push(await normalizeProfilePhoto(data[field]));
       } else if (field === 'status') {
         values.push(data[field]);
       } else {
         values.push(data[field] == null ? '' : String(data[field]));
       }
       assignments.push(`${field} = $${values.length}`);
-    });
+    }
 
     if (assignments.length === 0) {
       return res.status(400).json({ error: 'no fields' });
@@ -502,6 +572,7 @@ async function createApp(options = {}) {
     if (!NUTRITIONIST_STATUSES.has(status)) {
       return res.status(400).json({ error: 'invalid status' });
     }
+    const photo = await normalizeProfilePhoto(data.photo || '');
 
     const created = await row(
       db,
@@ -530,7 +601,7 @@ async function createApp(options = {}) {
       [
         id,
         data.name || '',
-        data.photo || '',
+        photo,
         data.crn || '',
         JSON.stringify(asArray(data.specialties)),
         JSON.stringify(asArray(data.approaches)),
@@ -590,8 +661,9 @@ async function createApp(options = {}) {
   }));
 
   app.use((error, req, res, next) => {
-    console.error(error);
-    res.status(500).json({ error: error.message });
+    const status = Number(error.status) || 500;
+    if (status >= 500) console.error(error);
+    res.status(status).json({ error: error.message });
   });
 
   return { app, db };

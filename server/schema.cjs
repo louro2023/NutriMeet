@@ -116,6 +116,8 @@ const CREATE_SCHEMA_SQL = `
     phone TEXT NOT NULL DEFAULT '',
     crn TEXT NOT NULL DEFAULT '',
     description TEXT NOT NULL DEFAULT '',
+    experience TEXT NOT NULL DEFAULT '',
+    education TEXT NOT NULL DEFAULT '',
     city TEXT NOT NULL DEFAULT '',
     state TEXT NOT NULL DEFAULT '',
     specialties JSONB NOT NULL DEFAULT '[]'::jsonb,
@@ -139,6 +141,8 @@ const CREATE_SCHEMA_SQL = `
 
 const MIGRATION_SQL = `
   ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
+  ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS experience TEXT NOT NULL DEFAULT '';
+  ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS education TEXT NOT NULL DEFAULT '';
   ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS city TEXT NOT NULL DEFAULT '';
   ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS state TEXT NOT NULL DEFAULT '';
 `;

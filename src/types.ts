@@ -37,6 +37,8 @@ export interface Subscription {
   phone: string;
   crn: string;
   description?: string;
+  experience?: string;
+  education?: string;
   city?: string;
   state?: string;
   specialties: string[];

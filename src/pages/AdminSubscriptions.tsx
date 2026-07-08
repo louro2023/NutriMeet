@@ -140,6 +140,18 @@ export function AdminSubscriptions() {
                   <p className="text-sm leading-6 text-gray-700">{selectedSub.description}</p>
                 </div>
               )}
+              {selectedSub.education && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Formação</label>
+                  <p className="text-sm leading-6 text-gray-700">{selectedSub.education}</p>
+                </div>
+              )}
+              {selectedSub.experience && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase">Experiência</label>
+                  <p className="text-sm leading-6 text-gray-700">{selectedSub.experience}</p>
+                </div>
+              )}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase">Especialidades</label>
                 <div className="flex flex-wrap gap-2 mt-1">

@@ -14,6 +14,8 @@ type FormState = {
   email: string;
   phone: string;
   description: string;
+  education: string;
+  experience: string;
   specialty: string;
   approach: string;
   city: string;
@@ -27,6 +29,8 @@ const initialForm: FormState = {
   email: '',
   phone: '',
   description: '',
+  education: '',
+  experience: '',
   specialty: '',
   approach: '',
   city: '',
@@ -99,6 +103,8 @@ export function ForNutritionists() {
         email: form.email,
         phone: form.phone,
         description: form.description,
+        education: form.education,
+        experience: form.experience,
         city: form.city,
         state: form.state,
         photo: form.photo,
@@ -196,8 +202,17 @@ export function ForNutritionists() {
               </div>
 
               <Field label="Sobre mim">
-                <Textarea required value={form.description} onChange={(event) => updateForm('description', event.target.value)} placeholder="Conte sobre sua trajetória, formação e abordagem de atendimento..." className="h-32" />
+                <Textarea required value={form.description} onChange={(event) => updateForm('description', event.target.value)} placeholder="Conte sobre sua trajetória e abordagem de atendimento..." className="h-32" />
               </Field>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <Field label="Formação">
+                  <Textarea required value={form.education} onChange={(event) => updateForm('education', event.target.value)} placeholder="Ex: Graduação em Nutrição pela USP. Pós-graduação em Nutrição Clínica." className="h-28" />
+                </Field>
+                <Field label="Experiência">
+                  <Textarea required value={form.experience} onChange={(event) => updateForm('experience', event.target.value)} placeholder="Ex: 5 anos de experiência em atendimento clínico e emagrecimento." className="h-28" />
+                </Field>
+              </div>
 
               <div className="grid gap-6 md:grid-cols-2">
                 <Field label="Especialidade">
@@ -245,7 +260,7 @@ export function ForNutritionists() {
                       <p className="text-sm font-semibold text-emerald-950">Clique para enviar a foto de perfil</p>
                     </>
                   )}
-                  <p className="mt-1 text-xs text-slate-500">JPG, PNG ou WebP até 5MB. Ela será exibida no avatar circular.</p>
+                  <p className="mt-1 text-xs text-slate-500">JPG, PNG ou WebP até 5MB. A imagem será compactada para até 300 x 300 px.</p>
                   <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={handlePhotoChange} />
                 </label>
               </Field>
@@ -315,7 +330,7 @@ function compressProfilePhoto(file: File): Promise<string> {
       const image = new Image();
       image.onerror = () => reject(new Error('Unable to load image.'));
       image.onload = () => {
-        const maxSize = 900;
+        const maxSize = 300;
         const ratio = Math.min(maxSize / image.width, maxSize / image.height, 1);
         const width = Math.round(image.width * ratio);
         const height = Math.round(image.height * ratio);
@@ -332,7 +347,7 @@ function compressProfilePhoto(file: File): Promise<string> {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, width, height);
         context.drawImage(image, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.82));
+        resolve(canvas.toDataURL('image/jpeg', 0.72));
       };
       image.src = String(reader.result);
     };

@@ -1,10 +1,33 @@
 const request = require('supertest');
+const sharp = require('sharp');
 const { createApp } = require('../server/app.cjs');
 const { createTestDatabase } = require('./testDb.cjs');
 
 let app;
 let db;
 let token;
+
+async function createPhotoDataUrl(width = 640, height = 480) {
+  const buffer = await sharp({
+    create: {
+      width,
+      height,
+      channels: 3,
+      background: '#57b879',
+    },
+  }).png().toBuffer();
+
+  return `data:image/png;base64,${buffer.toString('base64')}`;
+}
+
+async function expectCompressedProfilePhoto(photo) {
+  expect(photo).toMatch(/^data:image\/jpeg;base64,/);
+  const base64 = photo.slice(photo.indexOf(',') + 1);
+  const metadata = await sharp(Buffer.from(base64, 'base64')).metadata();
+  expect(metadata.format).toBe('jpeg');
+  expect(metadata.width).toBeLessThanOrEqual(300);
+  expect(metadata.height).toBeLessThanOrEqual(300);
+}
 
 beforeAll(async () => {
   process.env.ADMIN_EMAIL = 'admin@test.local';
@@ -91,7 +114,7 @@ describe('API basic', () => {
   });
 
   test('Public subscription stores photo and approval creates public profile', async () => {
-    const photo = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2w==';
+    const photo = await createPhotoDataUrl();
     const createRes = await request(app)
       .post('/api/subscriptions')
       .send({
@@ -100,6 +123,8 @@ describe('API basic', () => {
         phone: '11977777777',
         crn: '98765/SP',
         description: 'Atendimento humanizado e baseado em rotina real.',
+        education: 'Graduacao em Nutricao pela USP. Pos-graduacao em Nutricao Clinica.',
+        experience: '5 anos de experiencia em atendimento clinico.',
         city: 'São Paulo',
         state: 'SP',
         specialties: ['Nutrição Clínica'],
@@ -108,9 +133,12 @@ describe('API basic', () => {
       });
 
     expect(createRes.status).toBe(201);
-    expect(createRes.body.photo).toBe(photo);
+    expect(createRes.body.photo).not.toBe(photo);
+    await expectCompressedProfilePhoto(createRes.body.photo);
     expect(createRes.body.specialties).toEqual(['Nutrição Clínica']);
     expect(createRes.body.approaches).toEqual(['Comportamental']);
+    expect(createRes.body.education).toBe('Graduacao em Nutricao pela USP. Pos-graduacao em Nutricao Clinica.');
+    expect(createRes.body.experience).toBe('5 anos de experiencia em atendimento clinico.');
     expect(createRes.body.city).toBe('São Paulo');
     expect(createRes.body.state).toBe('SP');
 
@@ -124,10 +152,13 @@ describe('API basic', () => {
     const profileRes = await request(app).get(`/api/nutritionists/nutri-${createRes.body.id}`);
     expect(profileRes.status).toBe(200);
     expect(profileRes.body.name).toBe('Dra. Foto Teste');
-    expect(profileRes.body.photo).toBe(photo);
+    expect(profileRes.body.photo).not.toBe(photo);
+    await expectCompressedProfilePhoto(profileRes.body.photo);
     expect(profileRes.body.status).toBe('active');
     expect(profileRes.body.specialties).toEqual(['Nutrição Clínica']);
     expect(profileRes.body.approaches).toEqual(['Comportamental']);
+    expect(profileRes.body.education).toBe('Graduacao em Nutricao pela USP. Pos-graduacao em Nutricao Clinica.');
+    expect(profileRes.body.experience).toBe('5 anos de experiencia em atendimento clinico.');
     expect(profileRes.body.city).toBe('São Paulo');
     expect(profileRes.body.state).toBe('SP');
 
@@ -146,6 +177,8 @@ describe('API basic', () => {
         phone: '11966666666',
         crn: '56789/SP',
         description: 'Atendimento com foco em rotina possivel.',
+        education: 'Graduacao em Nutricao.',
+        experience: 'Atendimento clinico.',
         city: 'Sao Paulo',
         state: 'SP',
         specialties: ['Especialidade inexistente'],
