@@ -5,6 +5,7 @@ import { Home } from './pages/Home';
 import { FindNutritionist } from './pages/FindNutritionist';
 import { NutritionistProfile } from './pages/NutritionistProfile';
 import { ForNutritionists } from './pages/ForNutritionists';
+import { LegalDocument } from './pages/LegalDocument';
 import { AdminLogin } from './pages/AdminLogin';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminSubscriptions } from './pages/AdminSubscriptions';
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
       { path: 'encontre-nutricionista', element: <FindNutritionist /> },
       { path: 'nutricionista/:id', element: <NutritionistProfile /> },
       { path: 'sou-nutricionista', element: <ForNutritionists /> },
+      { path: 'documentos/:slug', element: <LegalDocument /> },
     ],
   },
   {

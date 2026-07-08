@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Leaf, Mail, MapPin, Phone, Twitter } from 'lucide-react';
 import { preloadSearchData } from '../lib/api';
+import { legalDocumentLinks } from '../content/legalDocuments';
 
 export function Footer() {
   return (
@@ -39,9 +40,13 @@ export function Footer() {
           <div>
             <h4 className="mb-4 text-sm font-bold uppercase text-lime-200">Confiança</h4>
             <ul className="space-y-3 text-sm text-emerald-50/75">
-              <li><a href="#" className="hover:text-lime-200">Termos de uso</a></li>
-              <li><a href="#" className="hover:text-lime-200">Política de privacidade</a></li>
-              <li><a href="#" className="hover:text-lime-200">Código de ética profissional</a></li>
+              {legalDocumentLinks.map((item) => (
+                <li key={item.slug}>
+                  <Link to={`/documentos/${item.slug}`} className="hover:text-lime-200">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
