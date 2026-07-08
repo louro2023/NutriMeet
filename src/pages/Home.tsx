@@ -53,7 +53,7 @@ const fallbackFaqs = [
   {
     id: 'fallback-faq-3',
     question: 'Qual é o valor das consultas?',
-    answer: 'A NutriMeet trabalha com proposta acessível e valor social anunciado no perfil dos profissionais participantes.',
+    answer: 'A consulta iniciada pela NutriMeet tem valor social de R$40 com os profissionais participantes da plataforma.',
   },
 ];
 
@@ -94,7 +94,7 @@ export function Home() {
           >
             <motion.div variants={itemVariants} className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-4 py-2 text-sm font-semibold text-emerald-800 shadow-sm backdrop-blur">
               <Sparkles className="h-4 w-4 text-lime-500" />
-              Nutrição acessível, acolhedora e feita para sua rotina
+              Consulta social por R$40 com profissionais verificados
             </motion.div>
 
             <motion.h1 variants={itemVariants} className="font-serif text-5xl font-extrabold leading-[1.02] text-emerald-950 sm:text-6xl lg:text-7xl">
@@ -102,7 +102,7 @@ export function Home() {
             </motion.h1>
 
             <motion.p variants={itemVariants} className="mt-6 max-w-xl text-lg leading-8 text-slate-700 sm:text-xl">
-              Conecte-se a nutricionistas verificados, escolha a abordagem que combina com você e comece uma jornada mais leve, prática e saudável.
+              Conecte-se a nutricionistas verificados, escolha a abordagem que combina com você e marque sua consulta pela plataforma com valor social de R$40.
             </motion.p>
 
             <motion.div variants={itemVariants} className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -116,9 +116,16 @@ export function Home() {
               </Button>
             </motion.div>
 
+            <motion.div variants={itemVariants} className="mt-6 max-w-xl rounded-lg border border-lime-200 bg-lime-50/90 p-4 shadow-sm backdrop-blur">
+              <p className="text-sm font-bold uppercase text-emerald-800">Preço social na NutriMeet</p>
+              <p className="mt-2 leading-7 text-slate-700">
+                Ao escolher um profissional pela plataforma, você já sabe o valor antes do primeiro contato: a consulta social é de R$40.
+              </p>
+            </motion.div>
+
             <motion.div variants={itemVariants} className="mt-10 grid max-w-xl grid-cols-3 gap-3">
               {[
-                ['R$40', 'valor social'],
+                ['R$40', 'consulta social'],
                 ['100%', 'online e simples'],
                 ['CRN', 'perfis verificados'],
               ].map(([value, label]) => (
@@ -144,7 +151,7 @@ export function Home() {
             {[
               { icon: Search, title: 'Procure pelo seu momento', desc: 'Filtre por especialidade, abordagem e localização para encontrar perfis alinhados ao seu objetivo.' },
               { icon: UserCheck, title: 'Escolha com confiança', desc: 'Veja CRN, experiência, formação e estilo de atendimento antes de decidir.' },
-              { icon: MessageCircle, title: 'Converse direto', desc: 'Abra o WhatsApp do profissional e combine sua consulta sem burocracia.' },
+              { icon: MessageCircle, title: 'Converse direto', desc: 'Abra o WhatsApp do profissional e combine sua consulta social de R$40 sem burocracia.' },
             ].map((step, idx) => (
               <motion.div key={step.title} whileHover={{ y: -6 }} transition={{ duration: 0.2 }}>
                 <Card className="h-full overflow-hidden border-emerald-100 bg-white/90 shadow-md shadow-emerald-950/5">
@@ -172,13 +179,13 @@ export function Home() {
                 Saúde alimentar sem cara de dieta impossível.
               </h2>
               <p className="mt-5 text-lg leading-8 text-slate-600">
-                A plataforma une profissionais qualificados, preço acessível e um jeito simples de encontrar quem entende sua rotina.
+                A plataforma une profissionais qualificados, consulta social de R$40 e um jeito simples de encontrar quem entende sua rotina.
               </p>
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
               {[
-                { icon: HeartPulse, title: 'Acesso mais leve', desc: 'Consulta com proposta social para aproximar nutrição de quem precisa começar.' },
+                { icon: HeartPulse, title: 'Acesso mais leve', desc: 'Consulta social de R$40 para aproximar nutrição de quem precisa começar.' },
                 { icon: BadgeCheck, title: 'Profissionais verificados', desc: 'Perfis com CRN, formação e informações claras para você decidir melhor.' },
                 { icon: Brain, title: 'Abordagem individual', desc: 'Escolha entre nutrição comportamental, clínica, esportiva, funcional e outras linhas.' },
                 { icon: Apple, title: 'Rotina possível', desc: 'Planos pensados para caber no cotidiano, sem promessa mágica ou culpa.' },

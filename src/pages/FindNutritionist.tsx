@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, LayoutGrid, List, MapPin, Search, Stethoscope } from 'lucide-react';
 import { getSearchData } from '../lib/api';
+import { buildWhatsappLink } from '../lib/utils';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
@@ -217,7 +218,7 @@ export function FindNutritionist() {
                               <Button asChild className="flex-1" variant="outline">
                                 <Link to={`/nutricionista/${encodeURIComponent(nutri.id)}`}>Ver perfil</Link>
                               </Button>
-                              <Button className="flex-1" onClick={() => window.open(`https://wa.me/${nutri.whatsapp}`, '_blank')}>
+                              <Button className="flex-1" onClick={() => window.open(buildWhatsappLink(nutri.whatsapp), '_blank')}>
                                 Agendar
                               </Button>
                             </div>

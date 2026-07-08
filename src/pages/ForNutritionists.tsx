@@ -157,7 +157,7 @@ export function ForNutritionists() {
               Amplie seus atendimentos com uma plataforma mais humana.
             </h1>
             <p className="mt-6 text-lg leading-8 text-slate-700">
-              Faça parte de uma rede criada para conectar profissionais verificados a pacientes que buscam orientação acessível e acolhedora.
+              Faça parte de uma rede criada para conectar profissionais verificados a pacientes que buscam orientação acessível e acolhedora, com consulta social de R$40 para atendimentos recebidos pela NutriMeet.
             </p>
           </div>
         </div>
@@ -167,7 +167,7 @@ export function ForNutritionists() {
         <div className="mb-14 grid gap-5 md:grid-cols-3">
           {[
             { icon: Users, title: 'Mais visibilidade', desc: 'Seu perfil aparece para pacientes que já estão procurando atendimento nutricional.' },
-            { icon: HeartHandshake, title: 'Propósito social', desc: 'Atenda com valor acessível e ajude a democratizar o cuidado alimentar.' },
+            { icon: HeartHandshake, title: 'Propósito social', desc: 'Atenda pacientes vindos da plataforma pelo valor social de R$40 e ajude a democratizar o cuidado alimentar.' },
             { icon: TrendingUp, title: 'Crescimento digital', desc: 'Construa presença online com perfil profissional, filtros e contato direto.' },
           ].map((benefit) => (
             <Card key={benefit.title} className="bg-white/90">
@@ -187,6 +187,13 @@ export function ForNutritionists() {
             <p className="mt-2 text-emerald-50/70">Sua foto será revisada e exibida no perfil público após aprovação.</p>
           </div>
           <CardContent className="p-8">
+            <div className="mb-6 rounded-lg border border-lime-200 bg-lime-50 p-4">
+              <p className="text-sm font-bold uppercase text-emerald-800">Compromisso de valor social</p>
+              <p className="mt-2 leading-7 text-slate-700">
+                Toda consulta que chegar para você através da NutriMeet deve ser cobrada pelo valor social de R$40.
+              </p>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <div className="rounded-lg border border-red-100 bg-red-50 p-3 text-sm font-medium text-red-700">
@@ -273,6 +280,10 @@ export function ForNutritionists() {
                 <label className="flex items-start gap-3">
                   <input type="checkbox" required className="mt-1 h-4 w-4 rounded text-emerald-600" />
                   <span className="text-sm leading-6 text-slate-600">Comprometo-me a seguir o Código de Ética do CFN em todos os atendimentos via plataforma.</span>
+                </label>
+                <label className="flex items-start gap-3">
+                  <input type="checkbox" required className="mt-1 h-4 w-4 rounded text-emerald-600" />
+                  <span className="text-sm leading-6 text-slate-600">Estou ciente de que toda consulta recebida pela NutriMeet deve ser cobrada pelo valor social de R$40.</span>
                 </label>
               </div>
 

@@ -3,6 +3,7 @@ import type React from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Clock, Globe, GraduationCap, LoaderCircle, MapPin, MessageCircle } from 'lucide-react';
 import { getNutritionist } from '../lib/api';
+import { buildWhatsappLink } from '../lib/utils';
 import type { Nutritionist } from '../types';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -177,7 +178,7 @@ function ProfileContent({ nutri }: { nutri: Nutritionist }) {
                   size="lg"
                   disabled={!whatsapp}
                   className="flex h-14 w-full items-center gap-2 bg-[#25D366] text-base font-bold hover:bg-[#128C7E] disabled:bg-slate-300"
-                  onClick={() => window.open(`https://wa.me/${whatsapp}`, '_blank')}
+                  onClick={() => window.open(buildWhatsappLink(whatsapp), '_blank')}
                 >
                   <MessageCircle className="h-6 w-6" />
                   Agendar no WhatsApp
